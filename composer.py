@@ -50,20 +50,46 @@ class Composer:
         return 'U'
 
     @staticmethod
-    def winning_side(game):
+    def winning_side(game, integer=False):
         score = game['score']
         if not score or not score.get('winner'):
-            return 'U'
+            return -1 if integer else 'U'
 
         if score['winner'] == 'DRAW':
-            return 'D'
+            return 0 if integer else 'D'
 
         if score['winner'] == 'HOME_TEAM':
-            return 'h'
+            return 1 if integer else 'h'
         elif score['winner'] == 'AWAY_TEAM':
-            return 'a'
+            return 2 if integer else 'a'
 
-        return 'u'
+        return -1 if integer else 'U'
+
+    @staticmethod
+    def goals(game, integer=False):
+        score = game['score']
+        if not score or not score.get('winner'):
+            return -1 if integer else 'U'
+
+         # Get the score data or provide default values if it's missing
+        score_data = game.get('score', {})
+        home_team_score = int(score_data.get('home_scores_full_time', 0))
+        away_team_score = int(score_data.get('away_scores_full_time', 0))
+
+        return home_team_score + away_team_score
+
+    @staticmethod
+    def gg(game, integer=False):
+        score = game['score']
+        if not score or not score.get('winner'):
+            return -1 if integer else 'U'
+
+         # Get the score data or provide default values if it's missing
+        score_data = game.get('score', {})
+        home_team_score = int(score_data.get('home_scores_full_time', 0))
+        away_team_score = int(score_data.get('away_scores_full_time', 0))
+
+        return home_team_score > 0 and away_team_score > 0
 
     @staticmethod
     def winner_id(game):
@@ -119,14 +145,14 @@ class Composer:
                     scores = away_team_score
                 else:
                     scores = 0
-            else: 
+            else:
                 if team_id == home_team_id:
                     scores = away_team_score
                 elif team_id == away_team_id:
                     scores = home_team_score
                 else:
                     scores = 0
-        
+
         # Convert the scores to integers if they are strings
         scores = int(scores)
 
