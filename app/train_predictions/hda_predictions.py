@@ -1,17 +1,18 @@
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 from configs.logger import Logger
-from configs.settings import PREDICTORS
+from configs.settings import COMMON_PREDICTORS, HDA_PREDICTORS
 from app.predictions_normalizers.hda_normalizer import normalizer
 from app.train_predictions.tuning.hda_target.hda_grid_search import grid_search
-from app.train_predictions.includes.functions import natural_occurances, save_model, get_hyperparameters
-from app.helpers.print_results import print_hda_predictions as print_predictions
+from app.train_predictions.includes.functions import natural_occurrences, save_model, feature_importance
+from app.train_predictions.hyperparameters.hyperparameters import get_hyperparameters
+from app.helpers.print_results import print_preds_update_hyperparams
 
 
-def hda_predictions(train_matches, test_matches, COMPETITION_ID, do_grid_search=False, update_model=False):
+def hda_predictions(user_token, train_matches, test_matches, compe_data, do_grid_search=False, is_random_search=False, update_model=False):
 
     target = 'hda_target'
-    scoring = 'weighted'
+    PREDICTORS = HDA_PREDICTORS
 
     Logger.info(f"Prediction Target: {target}")
 
@@ -20,24 +21,30 @@ def hda_predictions(train_matches, test_matches, COMPETITION_ID, do_grid_search=
     test_frame = pd.DataFrame(test_matches)
 
     outcomes = [0, 1, 2]
-    occurances = natural_occurances(outcomes, train_frame, target)
+    occurrences = natural_occurrences(
+        outcomes, train_frame, test_frame, target)
 
    # Select the appropriate class weight dictionary based on the target
-    n_estimators, min_samples_split, class_weight, has_weights = get_hyperparameters(
-        COMPETITION_ID, target, outcomes=outcomes)
+    hyper_params, has_weights = get_hyperparameters(target, compe_data, outcomes)
+    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyper_params
 
     model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                   min_samples_split=min_samples_split)
-    
+                                   min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
+
+    best_params = None
     if do_grid_search or not has_weights:
-        grid_search(model, train_frame, target,
-                    occurances, COMPETITION_ID, True)
-        n_estimators, min_samples_split, class_weight, has_weights = get_hyperparameters(
-            COMPETITION_ID, target)
-        occurances = natural_occurances(outcomes, train_frame, target)
+        best_params = grid_search(
+            model, train_frame, PREDICTORS, target, occurrences, is_random_search)
+
+        hyper_params, has_weights = get_hyperparameters(
+            compe_data, target, outcomes)
+        n_estimators, min_samples_split, class_weight, min_samples_leaf = hyper_params
+
+        occurrences = natural_occurrences(
+            outcomes, train_frame, test_frame, target)
 
         model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                       min_samples_split=min_samples_split)
+                                       min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
 
     Logger.info(
         f"Hyper Params {'(default)' if not has_weights else ''}: {n_estimators, class_weight, min_samples_split}\n")
@@ -45,7 +52,7 @@ def hda_predictions(train_matches, test_matches, COMPETITION_ID, do_grid_search=
     # Save model if update_model is set
     if update_model:
         save_model(model, train_frame, test_frame,
-                   PREDICTORS, target, COMPETITION_ID)
+                   PREDICTORS, target, compe_data['id'])
 
     model.fit(train_frame[PREDICTORS], train_frame[target])
 
@@ -53,9 +60,16 @@ def hda_predictions(train_matches, test_matches, COMPETITION_ID, do_grid_search=
     preds = model.predict(test_frame[PREDICTORS])
     predict_proba = model.predict_proba(test_frame[PREDICTORS])
 
+    feature_importance(model, PREDICTORS, False, 0.006)
+
     predict_proba = normalizer(predict_proba)
 
-    print_predictions(target, test_frame, preds,
-                      predict_proba, scoring, occurances, True)
+    compe_data['occurrences'] = occurrences
+    compe_data['best_params'] = best_params
+    compe_data['from_date'] = train_matches[0]['utc_date']
+    compe_data['to_date'] = test_matches[-1]['utc_date']
 
-    return [preds, predict_proba, occurances]
+    print_preds_update_hyperparams(user_token, target, compe_data,
+                                   preds, predict_proba, train_frame, test_frame, print_minimal=False)
+
+    return [preds, predict_proba, occurrences]

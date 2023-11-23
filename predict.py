@@ -7,11 +7,12 @@ from app.matches.load_matches import load_for_predictions
 from configs.logger import Logger
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import requests
 import json
+import requests
 
 # Define constants
 # 48, 47, 148
+PREDICTION_TYPE = 'regular_prediction'
 COMPETITION_ID = 48
 
 
@@ -37,19 +38,21 @@ def predict(user_token):
             print('No matches to make predictions!')
             continue
 
-        hda_preds = hda_predictions(matches, COMPETITION_ID)
+        # hda_preds = hda_predictions(matches, COMPETITION_ID)
 
         # below depends on hda_preds
-        bts_preds = bts_predictions(matches, COMPETITION_ID)
+        # bts_preds = bts_predictions(matches, COMPETITION_ID)
 
         # below depends on hda_preds, bts_preds
         over25_preds = over25_predictions(matches, COMPETITION_ID)
 
-        # below depends on hda_preds, bts_preds, over25_preds
-        cs_preds = cs_predictions(matches, COMPETITION_ID)
+        # return
 
-        merge_and_store_predictions(user_token, target_date, matches, hda_preds,
-                                    bts_preds, over25_preds, cs_preds)
+        # below depends on hda_preds, bts_preds, over25_preds
+        # cs_preds = cs_predictions(matches, COMPETITION_ID)
+
+        # merge_and_store_predictions(user_token, target_date, matches, hda_preds,
+        #                             bts_preds, over25_preds, cs_preds)
         print(f"______________\n")
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
@@ -101,7 +104,7 @@ def merge_and_store_predictions(user_token, target_date, matches, hda_preds, bts
 
     data = {
         'version': '1.0',
-        'type': 'regular',
+        'type': PREDICTION_TYPE,
         'competition_id': COMPETITION_ID,
         'date': str(target_date),
         'predictions': predictions}
@@ -113,7 +116,7 @@ def merge_and_store_predictions(user_token, target_date, matches, hda_preds, bts
 def storePredictions(data, user_token):
 
     # Now that you have the user token, you can use it for other API requests.
-    url = f"{API_BASE_URL}/admin/predictions/posting-from-python-app"
+    url = f"{API_BASE_URL}/admin/predictions/from-python-app/store-predictions"
 
     # Create a dictionary with the headers
     headers = {

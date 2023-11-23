@@ -31,7 +31,7 @@ def load_for_training(COMPETITION_ID, from_date, to_date, user_token, per_page=2
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)

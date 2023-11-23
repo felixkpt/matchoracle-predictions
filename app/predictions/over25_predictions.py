@@ -1,33 +1,31 @@
 import pandas as pd
 from configs.logger import Logger
-from configs.settings import PREDICTORS
-from app.train_predictions.includes.functions import get_model
+from configs.settings import COMMON_PREDICTORS
 from app.predictions_normalizers.over25_normalizer import normalizer
-from app.helpers.print_results import print_over25_predictions as print_predictions
+from app.train_predictions.includes.functions import get_model
+from app.helpers.print_results import print_preds_update_hyperparams
 
 
-def over25_predictions(matches, COMPETITION_ID):
+def over25_predictions(user_token, matches, COMPETITION_ID):
 
-    target = 'ov25_target'
-    scoring = 'weighted'
+    target = 'over25_target'
+    PREDICTORS = COMMON_PREDICTORS
 
     Logger.info(f"Prediction Target: {target}")
 
     # Create train and test DataFrames
-    matches_frame = pd.DataFrame(matches)
-    # print(matches_frame)
-    total_matches = len(matches_frame)
+    predict_frame = pd.DataFrame(matches)
 
     # Get the model
     model = get_model(target, COMPETITION_ID)
 
     # Make predictions on the test data
-    preds = model.predict(matches_frame[PREDICTORS])
-    predict_proba = model.predict_proba(matches_frame[PREDICTORS])
+    preds = model.predict(predict_frame[PREDICTORS])
+    predict_proba = model.predict_proba(predict_frame[PREDICTORS])
 
     predict_proba = normalizer(predict_proba)
 
-    print_predictions(target, total_matches, matches_frame,
-                                 preds, predict_proba, scoring)
+    print_preds_update_hyperparams(target, user_token, COMPETITION_ID, target, preds, predict_proba,
+                                   train_frame=None, test_frame=predict_frame, occurrences=None, best_params=None)
 
     return [preds, predict_proba]

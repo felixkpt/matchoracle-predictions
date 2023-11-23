@@ -2,11 +2,11 @@ from sklearn.metrics import accuracy_score, precision_score, f1_score, matthews_
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from configs.settings import PREDICTORS
+from configs.settings import COMMON_PREDICTORS
 import numpy as np
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
-_occurances = 22
+_occurrences = 22
 
 
 def params(train_frame, class_weight_counts=14):
@@ -34,9 +34,9 @@ def params(train_frame, class_weight_counts=14):
     return [class_weight, min_samples_splits, n_estimators]
 
 
-def grid_search_hda(model, train_frame, target, occurances):
-    global _occurances
-    _occurances = 333
+def grid_search_hda(model, train_frame, target, occurrences):
+    global _occurrences
+    _occurrences = 333
 
     class_weight, min_samples_splits, n_estimators = params(
         train_frame, 20)
@@ -74,7 +74,7 @@ def grid_search_hda(model, train_frame, target, occurances):
         # cv=StratifiedKFold(),
         n_jobs=-1,
         scoring=lambda estimator, X, y_true: scorer_hda(
-            estimator, X, y_true, occurances),
+            estimator, X, y_true, occurrences),
         verbose=2
     ).fit(train_frame[PREDICTORS], train_frame[target])
 
@@ -458,10 +458,10 @@ def scorer(estimator, X, y_true):
     return combined_score
 
 
-def scorer_hda(estimator, X, y_true, occurances):
-    h_occurance = occurances.get(0, 0)
-    d_occurance = occurances.get(1, 0)
-    a_occurance = occurances.get(2, 0)
+def scorer_hda(estimator, X, y_true, occurrences):
+    h_occurance = occurrences.get(0, 0)
+    d_occurance = occurrences.get(1, 0)
+    a_occurance = occurrences.get(2, 0)
 
     # Assuming estimator is a RandomForestClassifier
     y_pred = estimator.predict(X)

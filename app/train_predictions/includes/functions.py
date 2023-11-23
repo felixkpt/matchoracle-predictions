@@ -1,32 +1,37 @@
-import numpy as np
 import os
-import json
 import joblib
+import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, f1_score
 from sklearn.metrics import confusion_matrix as c_matrix
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from app.train_predictions.hyperparameters.hyperparameters import save_hyperparameters
 
 
-def natural_occurances(possible_outcomes, train_frame, target, print_output=True):
-    # Calculate the percentages & return occurances
-    occurances = {}
-    percentage_counts = train_frame[target].value_counts()
-    total_matches = len(train_frame)
+def natural_occurrences(possible_outcomes, train_frame, test_frame, target, print_output=True):
+    # Combine train and test frames
+    combined_frame = pd.concat([train_frame, test_frame], ignore_index=True)
+
+    # Calculate the percentages & return occurrences
+    occurrences = {}
+    percentage_counts = combined_frame[target].value_counts()
+    total_matches = len(combined_frame)
 
     for outcome in possible_outcomes:
         count = percentage_counts.get(outcome, -1)
-        percentage = round((count / total_matches) * 100, 2)
-        occurances[outcome] = percentage
+        percentage = (count / total_matches) * 100
+
+        # Set values close to zero to zero
+        percentage = round(0 if percentage < 0.01 else percentage, 2)
+
+        occurrences[outcome] = percentage
         if print_output:
             print(f"Natural Percentage of {outcome}: {percentage}%")
 
-    return occurances
+    return occurrences
 
 
-def natural_occurances_grid(possible_outcomes, train_frame, target, without_target_frame):
-    # Calculate the percentages & return occurances
-    occurances = {}
+def natural_occurrences_grid(possible_outcomes, train_frame, target, without_target_frame):
+    # Calculate the percentages & return occurrences
+    occurrences = {}
 
     _train_frame = train_frame
 
@@ -43,18 +48,22 @@ def natural_occurances_grid(possible_outcomes, train_frame, target, without_targ
     for outcome in possible_outcomes:
         count = percentage_counts.get(outcome, 0)
         percentage = round((count / total_matches) * 100, 2)
-        occurances[outcome] = percentage
+        occurrences[outcome] = percentage
         print(f"Natural Percentage of {outcome}: {percentage}%")
 
-    return occurances
+    return occurrences
 
 
 def save_model(model, train_frame, test_frame, PREDICTORS, target, COMPETITION_ID):
     matches = train_frame
     model.fit(matches[PREDICTORS], matches[target])
+
+    # Create the directory if it doesn't exist
+    directory = os.path.abspath(f"trained_models/{COMPETITION_ID}/")
+    os.makedirs(directory, exist_ok=True)
+
     # Save the model
-    filename = os.path.abspath(
-        f"trained_models/{COMPETITION_ID}/{target}_model.joblib")
+    filename = os.path.abspath(f"{directory}/{target}_model.joblib")
 
     joblib.dump(model, filename)
 
@@ -66,24 +75,30 @@ def get_model(target, COMPETITION_ID):
     return joblib.load(filename)
 
 
-def accuracy_score_precision_score(test_frame, target, preds, scoring):
+def preds_score(user_token, target, test_frame, preds, compe_data):
     # Calculate accuracy and precision for the target variable
     accuracy = accuracy_score(test_frame[target], preds)
     precision = precision_score(
-        test_frame[target], preds, average=scoring, zero_division=0)
+        test_frame[target], preds, average='weighted', zero_division=0)
     f1 = f1_score(test_frame[target], preds,
                   average='weighted', zero_division=0)
     # Calculate the percentages
-    mean = int((1/3 * accuracy + 1/3 * precision + 1/3 * f1) * 100)
-    accuracy = (int((accuracy / 1) * 100))
-    precision = (int((precision / 1) * 100))
-    f1 = (int((f1 / 1) * 100))
+    average_score = int((1/3 * accuracy + 1/3 * precision + 1/3 * f1) * 100)
+    accuracy = int((accuracy / 1) * 100)
+    precision = int((precision / 1) * 100)
+    f1 = int((f1 / 1) * 100)
 
     print(f"Accuracy: {accuracy}%")
     print(f"Precision: {precision}%")
     print(f"F1 score: {f1}%")
-    print(f"Mean score: {mean}%")
+    print(f"AVG score: {average_score}%")
     print(f"")
+
+    scores = accuracy, precision, f1, average_score
+
+    if compe_data['best_params']:
+        compe_data['scores'] = scores
+        save_hyperparameters(compe_data, target, user_token)
 
 
 def confusion_matrix(test_frame, target, preds):
@@ -95,132 +110,15 @@ def confusion_matrix(test_frame, target, preds):
     print("\n")
 
 
-def hyperparameters_array_generator(train_frame, class_weight_counts=14, rest_counts=6):
-    len_train = len(train_frame)
+def feature_importance(model, PREDICTORS, show=True, threshold=0.009):
+    feature_importance = model.feature_importances_
 
-    _min = 10
-    # Setting the range for params
-    _n_estimators = np.linspace(
-        100, len_train / 6 if len_train > 100 else 100, rest_counts)
-    class_weight = np.linspace(1.0, 2.0, class_weight_counts)
-    _min_samples_splits = np.linspace(
-        _min, len_train / 40 if len_train > _min else _min, rest_counts)
-    _max_depth = np.linspace(
-        _min, len_train / 10 if len_train > _min else _min, rest_counts)
+    if show:
+        print(feature_importance)
 
-    n_estimators = []
-    for x in _n_estimators:
-        x = int(x)
-        n_estimators.append(x)
-
-    min_samples_split = [2, 4, 6, 8]
-    for x in _min_samples_splits:
-        x = int(x)
-        min_samples_split.append(x)
-
-    max_depth = []
-    for x in _max_depth:
-        x = int(x)
-        max_depth.append(x)
-
-    return [n_estimators, min_samples_split, class_weight]
-
-
-def save_hyperparameters(COMPETITION_ID, target, best_params, train_counts, test_counts):
-    # Load existing hyperparameters data
-    filename = os.path.abspath(
-        f"app/train_predictions/tuning/hyperparameters/{target}_hyperparameters.json")
-
-    try:
-        with open(filename, 'r') as file:
-            hyperparameters_data = parse_json(json.load(file))
-    except FileNotFoundError:
-        hyperparameters_data = {}
-
-    current_datetime = datetime.today()
-    now = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-    add = {
-        'train_counts': train_counts,
-        'test_counts': test_counts,
-    }
-
-    # Check if COMPETITION_ID already exists
-    if COMPETITION_ID in hyperparameters_data:
-        # If it exists, update only the 'updated_at' timestamp
-        crated_at = hyperparameters_data[COMPETITION_ID]['crated_at']
-        hyperparameters_data[COMPETITION_ID] = {
-            **best_params,
-            **add,
-            **{"crated_at": crated_at, 'updated_at': now}
-        }
-    else:
-        # If it doesn't exist, add a new entry with 'created_at' and 'updated_at' timestamps
-        hyperparameters_data[COMPETITION_ID] = {
-            **best_params,
-            **add,
-            **{"crated_at": now, 'updated_at': now}
-        }
-
-    # Sort the dictionary by keys
-    sorted_hyperparameters = dict(
-        sorted(hyperparameters_data.items(), key=lambda x: int(x[0])))
-
-    # Save the sorted data back to the JSON file
-    with open(filename, 'w') as file:
-        json.dump(sorted_hyperparameters, file, indent=4)
-
-
-def get_hyperparameters(COMPETITION_ID, target, outcomes=None):
-
-    has_weights = False
-    n_estimators = 100
-    min_samples_split = 2
-    transformed_dict = {key: 1 for key in outcomes or [0, 1]}
-    class_weight = transformed_dict
-    min_samples_leaf = 1
-    max_features = 'log2'
-
-    try:
-        # Load hyperparameters data
-        filename = os.path.abspath(
-            f"app/train_predictions/tuning/hyperparameters/{target}_hyperparameters.json")
-
-        try:
-            with open(filename, 'r') as file:
-                hyperparameters_data = parse_json(json.load(file))
-        except:
-            FileNotFoundError
-
-        # Get the hyperparameters for COMPETITION_ID
-        best_params = hyperparameters_data.get(COMPETITION_ID, None)
-
-        hyper_params = best_params
-        n_estimators = hyper_params['n_estimators']
-        min_samples_split = hyper_params['min_samples_split']
-        class_weight = hyper_params['class_weight']
-        min_samples_leaf = hyper_params['min_samples_leaf']
-        max_features = hyper_params['max_features']
-        has_weights = True
-    except:
-        KeyError
-
-    hyper_params = [
-        n_estimators, min_samples_split, class_weight,
-        min_samples_leaf, max_features,
-    ]
-
-    return [hyper_params, has_weights]
-
-
-def parse_json(json_data):
-    if isinstance(json_data, dict):
-        parsed_data = {}
-        for key, value in json_data.items():
-            parsed_key = int(key) if key.isdigit() else key
-            parsed_value = parse_json(value)
-            parsed_data[parsed_key] = parsed_value
-        return parsed_data
-    elif isinstance(json_data, list):
-        return [parse_json(item) for item in json_data]
-    else:
-        return json_data
+    best_features = []
+    for i, val in enumerate(feature_importance):
+        if val > threshold:
+            best_features.append(PREDICTORS[i])
+    if show:
+        print(len(PREDICTORS), len(best_features), best_features)
