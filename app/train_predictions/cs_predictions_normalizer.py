@@ -14,9 +14,10 @@ np.random.seed(42)
 
 
 def cs_predictions_normalizer(user_token, train_matches, test_matches, compe_data, do_grid_search=False, is_random_search=False, update_model=False):
-
-    target = 'cs_target'
-    PREDICTORS = COMMON_PREDICTORS + ['over25_target', 'hda_target', 'bts_target']
+    return
+    target = 'cs_unsensored_target'
+    PREDICTORS = COMMON_PREDICTORS + \
+        ['over25_target', 'hda_target', 'bts_target']
 
     Logger.info(f"Prediction Target: {target}")
 
@@ -25,32 +26,25 @@ def cs_predictions_normalizer(user_token, train_matches, test_matches, compe_dat
     test_frame = pd.DataFrame(test_matches)
 
     outcomes = range(0, 121)
-    occurrences = natural_occurrences(outcomes, train_frame, test_frame, target)
+    occurrences = natural_occurrences(
+        outcomes, train_frame, test_frame, target)
 
    # Select the appropriate class weight dictionary based on the target
     hyper_params, has_weights = get_hyperparameters(
         compe_data, target, outcomes)
-    n_estimators, min_samples_split, class_weight, min_samples_leaf, max_features = hyper_params
 
-    model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                   min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf, max_features=max_features)
+    model = RandomForestClassifier(**hyper_params)
 
     best_params = None
     if do_grid_search or not has_weights:
         best_params = grid_search(
             model, train_frame, PREDICTORS, target, occurrences, is_random_search)
 
-        hyper_params, has_weights = get_hyperparameters(
-            compe_data, target, outcomes)
-        n_estimators, min_samples_split, class_weight, min_samples_leaf, max_features = hyper_params
-
-        occurrences = natural_occurrences(outcomes, train_frame, test_frame, target)
-
-        model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                       min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf, max_features=max_features)
+        hyper_params = best_params
+        model.set_params(**hyper_params)
 
     Logger.info(
-        f"Hyper Params {'(default)' if not has_weights else ''}: {n_estimators, class_weight, min_samples_split}\n")
+        f"Hyper Params {'(default)' if not has_weights else ''}: {hyper_params}\n")
 
     # Save model if update_model is set
     if update_model:

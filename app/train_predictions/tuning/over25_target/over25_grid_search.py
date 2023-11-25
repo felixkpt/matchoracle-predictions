@@ -10,9 +10,11 @@ np.random.seed(42)
 
 
 def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_search=False):
+    print(
+        f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 7, 1.3, 4)
+        train_frame, 5, 1.3, 4)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -33,7 +35,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'min_samples_leaf': [1, 2],
+        'min_samples_leaf': [2, 3, 5],
         'class_weight': class_weight,
     }
 

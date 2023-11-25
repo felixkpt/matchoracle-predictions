@@ -4,15 +4,18 @@ import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
 import numpy as np
+import pandas as pd
 
 # Set a random seed for reproducibility
 np.random.seed(42)
 
 
 def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_search=False):
+    print(
+        f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 12, 2.0, 4)
+        train_frame, 6, 2.0, 5)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -26,7 +29,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
     # filtering based on the fact that our model struggles at making 1 and 2 preds, 1 being the worst
     class_weight = []
     for x in _class_weight:
-        if x[0] < 1.3 and x[1] > 1.4 and x[2] < 1.8:
+        if x[0] < 1.3 and x[1] > 1.4 and x[2] < 1.7:
             class_weight.append(x)
 
     # Creating a dictionary grid for grid search
@@ -35,7 +38,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
         'class_weight': class_weight,
-        'min_samples_leaf': [1, 2, 3],
+        'min_samples_leaf': [2, 3, 5],
         'max_features': [None]
     }
 
@@ -44,7 +47,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
         gridsearch = GridSearchCV(
             estimator=model,
             param_grid=param_grid,
-            cv=StratifiedKFold(n_splits=5),
+            cv=StratifiedKFold(n_splits=3),
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             verbose=2,
@@ -68,29 +71,18 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    return best_params
-
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({
     #     'score': gridsearch.cv_results_['mean_test_score'],
-    #     'weight': [1 - x for x in class_weight]
+    #     'weight_0': [x[0] for x in class_weight],
+    #     'weight_1': [x[1] for x in class_weight],
+    #     'weight_2': [x[2] for x in class_weight]
     # })
 
-    # Set up the plot
-    # sns.set_style('whitegrid')
-    # plt.figure(figsize=(12, 8))
+    # Call the plotting method
+    # plot_grid_search_results(weigh_data)
 
-    # # Create the line plot for class weight vs. F1 score
-    # sns.lineplot(x=weigh_data['weight'], y=weigh_data['score'])
-
-    # # Add labels and ticks to the plot
-    # plt.xlabel('Weight for class 1')
-    # plt.ylabel('F1 score')
-    # plt.xticks([round(i / 10, 1) for i in range(0, 11, 1)])
-    # plt.title('Scoring for different class weights', fontsize=24)
-
-    # # Show the plot
-    # plt.show()
+    return best_params
 
 
 def scorer(estimator, X, y_true, occurrences):
@@ -131,3 +123,24 @@ def scorer(estimator, X, y_true, occurrences):
     combined_score = 0.3 * precision + 0.4 * f1 + 0.3 * natural_score
 
     return combined_score
+
+
+def plot_grid_search_results(weigh_data):
+    # Set up the plot
+    sns.set_style('whitegrid')
+    plt.figure(figsize=(12, 8))
+
+    # Create a 3D plot for class weights vs. F1 score
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(weigh_data['weight_0'], weigh_data['weight_1'],
+               weigh_data['weight_2'], c=weigh_data['score'], cmap='viridis', s=100)
+
+    # Add labels and ticks to the plot
+    ax.set_xlabel('Weight for class 0')
+    ax.set_ylabel('Weight for class 1')
+    ax.set_zlabel('Weight for class 2')
+    ax.set_title('Scoring for different class weights', fontsize=24)
+
+    # Show the plot
+    plt.show()

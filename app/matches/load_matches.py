@@ -8,7 +8,9 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(COMPETITION_ID, from_date, to_date, user_token, per_page=2000, train_ratio=0.75, ignore_saved=False):
+def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+
+    from_date, to_date, history_limit_per_match = be_params
 
     from_date_str = from_date.strftime("%Y-%m-%d")
     to_date_str = to_date.strftime("%Y-%m-%d")
@@ -31,7 +33,7 @@ def load_for_training(COMPETITION_ID, from_date, to_date, user_token, per_page=2
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)

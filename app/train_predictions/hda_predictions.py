@@ -25,29 +25,21 @@ def hda_predictions(user_token, train_matches, test_matches, compe_data, do_grid
         outcomes, train_frame, test_frame, target)
 
    # Select the appropriate class weight dictionary based on the target
-    hyper_params, has_weights = get_hyperparameters(target, compe_data, outcomes)
-    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyper_params
-
-    model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                   min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
+    hyper_params, has_weights = get_hyperparameters(
+        compe_data, target, outcomes)
+    
+    model = RandomForestClassifier(**hyper_params)
 
     best_params = None
     if do_grid_search or not has_weights:
         best_params = grid_search(
             model, train_frame, PREDICTORS, target, occurrences, is_random_search)
-
-        hyper_params, has_weights = get_hyperparameters(
-            compe_data, target, outcomes)
-        n_estimators, min_samples_split, class_weight, min_samples_leaf = hyper_params
-
-        occurrences = natural_occurrences(
-            outcomes, train_frame, test_frame, target)
-
-        model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                       min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
+        
+        hyper_params = best_params
+        model.set_params(**hyper_params)
 
     Logger.info(
-        f"Hyper Params {'(default)' if not has_weights else ''}: {n_estimators, class_weight, min_samples_split}\n")
+        f"Hyper Params {'(default)' if not has_weights else ''}: {hyper_params}\n")
 
     # Save model if update_model is set
     if update_model:
@@ -70,6 +62,6 @@ def hda_predictions(user_token, train_matches, test_matches, compe_data, do_grid
     compe_data['to_date'] = test_matches[-1]['utc_date']
 
     print_preds_update_hyperparams(user_token, target, compe_data,
-                                   preds, predict_proba, train_frame, test_frame, print_minimal=False)
+                                   preds, predict_proba, train_frame, test_frame, print_minimal=True)
 
     return [preds, predict_proba, occurrences]

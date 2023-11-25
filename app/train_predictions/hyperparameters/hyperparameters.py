@@ -9,9 +9,9 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
     len_train = len(train_frame)
 
     # Setting the range for params
-    _n_estimators = np.linspace(100, 150, rest_counts)
+    _n_estimators = np.linspace(150, 300, rest_counts)
     class_weight = np.linspace(1.0, class_weight_max, class_weight_counts)
-    _min_samples_splits = np.linspace(2, 50, rest_counts)
+    _min_samples_splits = np.linspace(5, 40, rest_counts)
     _max_depth = np.linspace(
         2, len_train / 10 if len_train > 2 else 2, rest_counts)
 
@@ -34,6 +34,7 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
 
 
 def save_hyperparameters(compe_data, target, user_token):
+    print('Saving hyperparameters...')
     id = compe_data['id']
     prediction_type = compe_data['prediction_type']
     best_params = compe_data['best_params']
@@ -49,8 +50,8 @@ def save_hyperparameters(compe_data, target, user_token):
     directory = os.path.abspath(
         f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/")
     os.makedirs(directory, exist_ok=True)
-    
-    filename = os.path.abspath(f"{directory}/{target}_hyperparameters.json")
+
+    filename = os.path.abspath(f"{directory}/{target}_hyperparams.json")
 
     try:
         with open(filename, 'r') as file:
@@ -115,7 +116,7 @@ def get_hyperparameters(compe_data, target, outcomes=None):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            f"app/train_predictions/tuning/hyperparameters/{compe_data['prediction_type']}/{target}_hyperparameters.json")
+            f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/{target}_hyperparams.json")
 
         try:
             with open(filename, 'r') as file:
@@ -123,21 +124,24 @@ def get_hyperparameters(compe_data, target, outcomes=None):
         except:
             FileNotFoundError
 
-        # Get the hyperparameters for id
-        best_params = hyperparameters_data.get(id, None)
+        # Get the hyperparameters for compe id
+        best_params = hyperparameters_data.get(compe_data['id'], None)
 
         hyper_params = best_params
         n_estimators = hyper_params['n_estimators']
         min_samples_split = hyper_params['min_samples_split']
-        class_weight = hyper_params['class_weight']
         min_samples_leaf = hyper_params['min_samples_leaf']
+        class_weight = hyper_params['class_weight']
         has_weights = True
     except:
         KeyError
 
-    hyper_params = [
-        n_estimators, min_samples_split, class_weight, min_samples_leaf,
-    ]
+    hyper_params = {
+        'n_estimators': n_estimators,
+        'min_samples_split': min_samples_split,
+        'min_samples_leaf': min_samples_leaf,
+        'class_weight': class_weight,
+    }
 
     return [hyper_params, has_weights]
 

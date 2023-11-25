@@ -27,7 +27,9 @@ def recursive(class_weight, outcomes, j):
 
 
 def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_search=False):
-
+    print(
+        f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
+    
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
         train_frame, 4, 1.3, 2)
 

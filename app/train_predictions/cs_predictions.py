@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 from configs.logger import Logger
-from configs.settings import COMMON_PREDICTORS
+from configs.settings import COMMON_PREDICTORS, CS_PREDICTORS
 from app.predictions_normalizers.cs_normalizer import normalizer
 from app.train_predictions.tuning.cs_target.cs_grid_search import grid_search
 from app.train_predictions.includes.functions import natural_occurrences, save_model, feature_importance
@@ -16,7 +16,7 @@ np.random.seed(42)
 def cs_predictions(user_token, train_matches, test_matches, compe_data, do_grid_search=False, is_random_search=False, update_model=False):
 
     target = 'cs_target'
-    PREDICTORS = COMMON_PREDICTORS
+    PREDICTORS = CS_PREDICTORS
 
     Logger.info(f"Prediction Target: {target}")
 
@@ -31,28 +31,19 @@ def cs_predictions(user_token, train_matches, test_matches, compe_data, do_grid_
    # Select the appropriate class weight dictionary based on the target
     hyper_params, has_weights = get_hyperparameters(
         compe_data, target, outcomes)
-    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyper_params
 
-    model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                   min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
+    model = RandomForestClassifier(**hyper_params)
 
     best_params = None
     if do_grid_search or not has_weights:
         best_params = grid_search(
             model, train_frame, PREDICTORS, target, occurrences, is_random_search)
 
-        hyper_params, has_weights = get_hyperparameters(
-            compe_data, target, outcomes)
-        n_estimators, min_samples_split, class_weight, min_samples_leaf = hyper_params
-
-        occurrences = natural_occurrences(
-            outcomes, train_frame, test_frame, target)
-
-        model = RandomForestClassifier(random_state=1, n_estimators=n_estimators, class_weight=class_weight,
-                                       min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
+        hyper_params = best_params
+        model.set_params(**hyper_params)
 
     Logger.info(
-        f"Hyper Params {'(default)' if not has_weights else ''}: {n_estimators, class_weight, min_samples_split}\n")
+        f"Hyper Params {'(default)' if not has_weights else ''}: {hyper_params}\n")
 
     # Save model if update_model is set
     if update_model:
@@ -65,7 +56,7 @@ def cs_predictions(user_token, train_matches, test_matches, compe_data, do_grid_
     preds = model.predict(test_frame[PREDICTORS])
     predict_proba = model.predict_proba(test_frame[PREDICTORS])
 
-    feature_importance(model, PREDICTORS)
+    feature_importance(model, PREDICTORS, False, 0.006)
 
     predict_proba = normalizer(predict_proba)
 
