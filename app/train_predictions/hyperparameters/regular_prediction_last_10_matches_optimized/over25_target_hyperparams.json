@@ -1,0 +1,147 @@
+{
+    "25": {
+        "class_weight": {
+            "0": 1.0,
+            "1": 1.3
+        },
+        "min_samples_leaf": 5,
+        "min_samples_split": 50,
+        "n_estimators": 250,
+        "random_state": 1,
+        "prediction_type": "regular_prediction_last_10_matches_optimized",
+        "train_counts": 1035,
+        "test_counts": 345,
+        "occurrences": {
+            "0": 56.74,
+            "1": 43.26
+        },
+        "last_predicted": {
+            "0": 50.72,
+            "1": 49.28
+        },
+        "accuracy_score": 49,
+        "precision_score": 50,
+        "f1_score": 49,
+        "average_score": 49,
+        "from_date": "2020-08-08 22:00:00",
+        "to_date": "2023-09-27 22:00:00",
+        "created_at": "2023-11-26 00:51:48",
+        "updated_at": "2023-11-26 00:51:48"
+    },
+    "47": {
+        "class_weight": {
+            "0": 1.0,
+            "1": 1.3
+        },
+        "min_samples_leaf": 5,
+        "min_samples_split": 23,
+        "n_estimators": 150,
+        "random_state": 1,
+        "prediction_type": "regular_prediction_last_10_matches_optimized",
+        "train_counts": 1322,
+        "test_counts": 441,
+        "occurrences": {
+            "0": 55.42,
+            "1": 44.58
+        },
+        "last_predicted": {
+            "0": 58.28,
+            "1": 41.72
+        },
+        "accuracy_score": 52,
+        "precision_score": 52,
+        "f1_score": 52,
+        "average_score": 52,
+        "from_date": "2020-09-11 18:45:00",
+        "to_date": "2023-09-29 19:00:00",
+        "created_at": "2023-11-26 01:35:03",
+        "updated_at": "2023-11-26 01:35:03"
+    },
+    "48": {
+        "class_weight": {
+            "0": 1.3,
+            "1": 1.075
+        },
+        "min_samples_leaf": 3,
+        "min_samples_split": 10,
+        "n_estimators": 183,
+        "random_state": 1,
+        "prediction_type": "regular_prediction_last_10_matches_optimized",
+        "train_counts": 899,
+        "test_counts": 300,
+        "occurrences": {
+            "0": 47.29,
+            "1": 52.71
+        },
+        "last_predicted": {
+            "0": 41.33,
+            "1": 58.67
+        },
+        "accuracy_score": 51,
+        "precision_score": 50,
+        "f1_score": 51,
+        "average_score": 51,
+        "from_date": "2020-09-12 11:30:00",
+        "to_date": "2023-09-24 15:30:00",
+        "created_at": "2023-11-26 02:06:52",
+        "updated_at": "2023-11-26 02:06:52"
+    },
+    "125": {
+        "class_weight": {
+            "0": 1.0,
+            "1": 1.225
+        },
+        "min_samples_leaf": 5,
+        "min_samples_split": 50,
+        "n_estimators": 150,
+        "random_state": 1,
+        "prediction_type": "regular_prediction_last_10_matches_optimized",
+        "train_counts": 501,
+        "test_counts": 167,
+        "occurrences": {
+            "0": 50.75,
+            "1": 49.25
+        },
+        "last_predicted": {
+            "0": 41.92,
+            "1": 58.08
+        },
+        "accuracy_score": 54,
+        "precision_score": 54,
+        "f1_score": 54,
+        "average_score": 54,
+        "from_date": "2021-08-06 19:15:00",
+        "to_date": "2023-09-29 19:15:00",
+        "created_at": "2023-11-26 02:26:45",
+        "updated_at": "2023-11-26 02:26:45"
+    },
+    "148": {
+        "class_weight": {
+            "0": 1.0,
+            "1": 1.3
+        },
+        "min_samples_leaf": 7,
+        "min_samples_split": 50,
+        "n_estimators": 216,
+        "random_state": 1,
+        "prediction_type": "regular_prediction_last_10_matches_optimized",
+        "train_counts": 618,
+        "test_counts": 206,
+        "occurrences": {
+            "0": 54.98,
+            "1": 45.02
+        },
+        "last_predicted": {
+            "0": 53.4,
+            "1": 46.6
+        },
+        "accuracy_score": 51,
+        "precision_score": 51,
+        "f1_score": 51,
+        "average_score": 51,
+        "from_date": "2020-09-12 16:30:00",
+        "to_date": "2023-09-29 19:00:00",
+        "created_at": "2023-11-26 02:49:27",
+        "updated_at": "2023-11-26 02:49:27"
+    }
+}

@@ -2,7 +2,7 @@ from sklearn.metrics import accuracy_score, precision_score, f1_score, matthews_
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from configs.settings import COMMON_PREDICTORS
+from configs.settings import COMMON_FEATURES
 import numpy as np
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
@@ -76,7 +76,7 @@ def grid_search_hda(model, train_frame, target, occurrences):
         scoring=lambda estimator, X, y_true: scorer_hda(
             estimator, X, y_true, occurrences),
         verbose=2
-    ).fit(train_frame[PREDICTORS], train_frame[target])
+    ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score
     best_class_weight = gridsearch.best_params_
@@ -138,7 +138,7 @@ def grid_search_over_under(model, train_frame, target, scoring):
         n_jobs=-1,
         scoring=scorer_over_under,
         verbose=2
-    ).fit(train_frame[PREDICTORS], train_frame[target])
+    ).fit(train_frame[FEATURES], train_frame[target])
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({
@@ -200,7 +200,7 @@ def grid_search_gg_ng(model, train_frame, target, scoring):
         n_jobs=-1,
         scoring=scorer_gg_ng,
         verbose=2
-    ).fit(train_frame[PREDICTORS], train_frame[target])
+    ).fit(train_frame[FEATURES], train_frame[target])
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({
@@ -408,7 +408,7 @@ def grid_search_cs(model, train_frame, target, scoring):
         n_jobs=-1,
         scoring=scorer_cs,
         verbose=2
-    ).fit(train_frame[PREDICTORS], train_frame[target])
+    ).fit(train_frame[FEATURES], train_frame[target])
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({

@@ -9,9 +9,9 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
     len_train = len(train_frame)
 
     # Setting the range for params
-    _n_estimators = np.linspace(150, 300, rest_counts)
+    _n_estimators = np.linspace(150, 250, rest_counts)
     class_weight = np.linspace(1.0, class_weight_max, class_weight_counts)
-    _min_samples_splits = np.linspace(5, 40, rest_counts)
+    _min_samples_splits = np.linspace(10, 50, rest_counts)
     _max_depth = np.linspace(
         2, len_train / 10 if len_train > 2 else 2, rest_counts)
 

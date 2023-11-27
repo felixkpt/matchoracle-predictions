@@ -26,12 +26,12 @@ def recursive(class_weight, outcomes, j):
         return res
 
 
-def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_search=False):
+def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False):
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
     
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 4, 1.3, 2)
+        train_frame, 4, 1.3, 4)
 
     outcomes = train_frame[target].unique()
 
@@ -65,7 +65,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
         'class_weight': [{0: 1}],
-        'min_samples_leaf': [1],
+        'min_samples_leaf': [3, 5, 7],
         'max_features': [None]
     }
 
@@ -79,7 +79,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
                 estimator, X, y_true, occurrences),
             verbose=2,
             n_jobs=-1,
-        ).fit(train_frame[PREDICTORS], train_frame[target])
+        ).fit(train_frame[FEATURES], train_frame[target])
     else:
         gridsearch = RandomizedSearchCV(
             estimator=model,
@@ -90,7 +90,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
                 estimator, X, y_true, occurrences),
             random_state=42,
             verbose=3,
-        ).fit(train_frame[PREDICTORS], train_frame[target])
+        ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score
     best_params = gridsearch.best_params_

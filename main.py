@@ -17,13 +17,23 @@ def main():
 
         print('______ PREDICTIONS APP START ______\n')
 
-        # train(user_token)
+        train(user_token)
 
         # predict(user_token)
 
-        target = 'cs_target'
-        prediction_types = ['regular_prediction_last_5_matches',
-                            'regular_prediction_last_10_matches', 'regular_prediction_last_15_matches']
+        target = 'hda_target'
+        target = 'bts_target'
+        # target = 'over25_target'
+        # target = 'cs_target'
+
+        prediction_types = [
+            'regular_prediction_last_5_matches_optimized',
+            'regular_prediction_last_7_matches_optimized',
+            'regular_prediction_last_10_matches_optimized',
+            'regular_prediction_last_15_matches_optimized',
+            'regular_prediction_last_20_matches_optimized',
+            'regular_prediction_last_25_matches_optimized',
+        ]
 
         model_metrics = ModelMetrics(target, prediction_types)
         comparison_results = model_metrics.compare_models()

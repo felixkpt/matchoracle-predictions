@@ -1,4 +1,4 @@
-from app.train_predictions.includes.functions import preds_score, confusion_matrix
+from app.helpers.functions import preds_score, confusion_matrix
 from collections import Counter
 
 
@@ -16,6 +16,7 @@ def header(compe_data, preds):
 
 
 def print_preds_update_hyperparams(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+
     if target == 'hda_target':
         print_hda_predictions(user_token, target, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)
@@ -47,7 +48,7 @@ def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, 
     print(f"Percentage of Away Win (2): {y_pred_2}%")
     print(f"")
 
-    if compe_data:
+    if compe_data and 'is_training' in compe_data and compe_data['is_training']:
         compe_data['predicted'] = predicted
         compe_data['train_counts'] = len(train_frame)
         compe_data['test_counts'] = len(test_frame)
@@ -87,7 +88,7 @@ def print_bts_predictions(user_token, target, compe_data, preds, predict_proba, 
     print(f"Percentage of Yes (1): {y_pred_1}%")
     print(f"")
 
-    if compe_data:
+    if compe_data and 'is_training' in compe_data and compe_data['is_training']:
         compe_data['predicted'] = predicted
         compe_data['train_counts'] = len(train_frame)
         compe_data['test_counts'] = len(test_frame)
@@ -128,7 +129,7 @@ def print_over25_predictions(user_token, target, compe_data, preds, predict_prob
     print(f"Percentage of OVER (1): {y_pred_1}%")
     print(f"")
 
-    if compe_data:
+    if compe_data and 'is_training' in compe_data and compe_data['is_training']:
         compe_data['predicted'] = predicted
         compe_data['train_counts'] = len(train_frame)
         compe_data['test_counts'] = len(test_frame)
@@ -186,15 +187,15 @@ def print_cs_predictions(user_token, target, compe_data, preds, predict_proba, t
 
         print(f"Predictions: {preds}")
 
-    # filter more than 0 only
-    __occurrences = {}
-    for k in compe_data['occurrences']:
-        if compe_data['occurrences'][k] > 0:
-            __occurrences[k] = compe_data['occurrences'][k]
+    if compe_data and 'is_training' in compe_data and compe_data['is_training']:
+        # filter more than 0 only
+        __occurrences = {}
+        for k in compe_data['occurrences']:
+            if compe_data['occurrences'][k] > 0:
+                __occurrences[k] = compe_data['occurrences'][k]
 
-    compe_data['occurrences'] = __occurrences
+        compe_data['occurrences'] = __occurrences
 
-    if compe_data:
         compe_data['predicted'] = predicted
         compe_data['train_counts'] = len(train_frame)
         compe_data['test_counts'] = len(test_frame)

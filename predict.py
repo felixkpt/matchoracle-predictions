@@ -11,54 +11,63 @@ import json
 import requests
 
 # Define constants
-# 48, 47, 148
+HISTORY_LIMITS = [5, 10, 15, 20]
+HISTORY_LIMITS = [10]
 PREDICTION_TYPE = 'regular_prediction'
-COMPETITION_ID = 48
+# Campeonato Brasileiro Série A, Championship, EPL, Portugal primera, LaLiga
+# 47, 48, 125, 148
+COMPETITION_IDS = [25, 47, 48, 125, 148]
+COMPETITION_IDS = [47]
 
 
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
-    # Calculate from_date and to_date
-    target_date_init = datetime.strptime('2023-09-01', '%Y-%m-%d')
+    PREDICTION_TYPE = f"regular_prediction_last_{10}_matches_refined"
 
-    for i in range(0, 70):
-
-        target_date = target_date_init - relativedelta(days=-1 * i)
-        target_date = target_date.strftime("%Y-%m-%d")
+    for COMPETITION_ID in COMPETITION_IDS:
+        # Calculate from_date and to_date
+        target_date_init = datetime.strptime('2023-10-01', '%Y-%m-%d')
+        compe_data = {}
+        compe_data['id'] = COMPETITION_ID
+        compe_data['prediction_type'] = PREDICTION_TYPE
 
         Logger.info(f"Competition: {COMPETITION_ID}")
-        Logger.info(f"Date: {target_date}\n")
+        Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
 
-        matches = load_for_predictions(COMPETITION_ID, target_date, user_token)
+        for i in range(0, 60):
 
-        total_matches = len(matches)
+            target_date = target_date_init - relativedelta(days=-1 * i)
+            target_date = target_date.strftime("%Y-%m-%d")
 
-        if total_matches == 0:
-            print('No matches to make predictions!')
-            continue
+            Logger.info(f"Competition: {COMPETITION_ID}")
+            Logger.info(f"Date: {target_date}\n")
 
-        # hda_preds = hda_predictions(matches, COMPETITION_ID)
+            matches = load_for_predictions(COMPETITION_ID, target_date, user_token)
 
-        # below depends on hda_preds
-        # bts_preds = bts_predictions(matches, COMPETITION_ID)
+            total_matches = len(matches)
 
-        # below depends on hda_preds, bts_preds
-        over25_preds = over25_predictions(matches, COMPETITION_ID)
+            if total_matches == 0:
+                print('No matches to make predictions!')
+            else:
+                print(f'Predicting {total_matches} matches...')
 
-        # return
+                hda_preds = hda_predictions(matches, compe_data)
 
-        # below depends on hda_preds, bts_preds, over25_preds
-        # cs_preds = cs_predictions(matches, COMPETITION_ID)
+                bts_preds = bts_predictions(matches, compe_data)
 
-        # merge_and_store_predictions(user_token, target_date, matches, hda_preds,
-        #                             bts_preds, over25_preds, cs_preds)
-        print(f"______________\n")
+                over25_preds = over25_predictions(matches, compe_data)
+
+                cs_preds = cs_predictions(matches, compe_data)
+
+                merge_and_store_predictions(user_token, compe_data, target_date, matches, hda_preds,
+                                            bts_preds, over25_preds, cs_preds)
+            print(f"______________\n")
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
 
-def merge_and_store_predictions(user_token, target_date, matches, hda_preds, bts_preds, over25_preds, cs_preds):
+def merge_and_store_predictions(user_token, compe_data, target_date, matches, hda_preds, bts_preds, over25_preds, cs_preds):
 
     hda_preds, hda_preds_proba = hda_preds
     bts_preds, bts_preds_proba = bts_preds
@@ -104,8 +113,8 @@ def merge_and_store_predictions(user_token, target_date, matches, hda_preds, bts
 
     data = {
         'version': '1.0',
-        'type': PREDICTION_TYPE,
-        'competition_id': COMPETITION_ID,
+        'type': compe_data['prediction_type'],
+        'competition_id': compe_data['id'],
         'date': str(target_date),
         'predictions': predictions}
 

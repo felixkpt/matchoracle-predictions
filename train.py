@@ -10,11 +10,12 @@ from dateutil.relativedelta import relativedelta
 import sys
 
 # Define constants
-HISTORY_LIMITS = [10, 15, 20]
+HISTORY_LIMITS = [5, 7, 10, 15, 20, 25]
+# HISTORY_LIMITS = [7]
 # Campeonato Brasileiro Série A, Championship, EPL, Portugal primera, LaLiga
 # 47, 48, 125, 148
 COMPETITION_IDS = [25, 47, 48, 125, 148]
-# COMPETITION_IDS = [47]
+# COMPETITION_IDS = [125, 148]
 
 # Calculate from_date and to_date
 TRAIN_TO_DATE = datetime.strptime('2023-09-30', '%Y-%m-%d')
@@ -29,8 +30,8 @@ def train(user_token):
 
     for history_limit_per_match in HISTORY_LIMITS:
 
-        PREDICTION_TYPE = f"regular_prediction_last_{history_limit_per_match}_matches"
-        
+        PREDICTION_TYPE = f"regular_prediction_last_{history_limit_per_match}_matches_optimized_30"
+
         for COMPETITION_ID in COMPETITION_IDS:
             compe_data = {}
             compe_data['id'] = COMPETITION_ID
@@ -50,7 +51,8 @@ def train(user_token):
 
             be_params = from_date, to_date, history_limit_per_match
             # Load train and test data for all targets
-            train_matches, test_matches = load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=ignore_saved)
+            train_matches, test_matches = load_for_training(
+                COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.75, ignore_saved=ignore_saved)
 
             total_matches = len(train_matches) + len(test_matches)
 
@@ -79,10 +81,10 @@ def train(user_token):
                             is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
             over25_predictions(user_token, train_matches, test_matches, compe_data,
-                            is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                               is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
             cs_predictions(user_token, train_matches, test_matches, compe_data,
-                        is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")
 

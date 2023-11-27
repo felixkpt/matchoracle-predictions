@@ -89,7 +89,7 @@ def get(url, user_token, filter=True):
         stats = match['stats']
 
         # We will filter if load_for_training, dont filter if load_for_predictions
-        if filter == True and stats['target'] == False:
+        if filter == True and not stats['has_results']:
             continue
 
         matches_data.append({**match, **stats})

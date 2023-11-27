@@ -9,7 +9,7 @@ import numpy as np
 np.random.seed(42)
 
 
-def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_search=False):
+def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False):
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
@@ -35,7 +35,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'min_samples_leaf': [2, 3, 5],
+        'min_samples_leaf': [3, 5],
         'class_weight': class_weight,
     }
 
@@ -49,7 +49,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
                 estimator, X, y_true, occurrences),
             verbose=2,
             n_jobs=-1,
-        ).fit(train_frame[PREDICTORS], train_frame[target])
+        ).fit(train_frame[FEATURES], train_frame[target])
     else:
         gridsearch = RandomizedSearchCV(
             estimator=model,
@@ -60,7 +60,7 @@ def grid_search(model, train_frame, PREDICTORS, target, occurrences, is_random_s
                 estimator, X, y_true, occurrences),
             random_state=42,
             verbose=3,
-        ).fit(train_frame[PREDICTORS], train_frame[target])
+        ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score
     best_params = gridsearch.best_params_
