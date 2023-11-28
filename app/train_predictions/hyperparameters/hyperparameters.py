@@ -51,7 +51,9 @@ def save_hyperparameters(compe_data, target, user_token):
         f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/")
     os.makedirs(directory, exist_ok=True)
 
-    filename = os.path.abspath(f"{directory}/{target}_hyperparams.json")
+    name = target[0]+'_multiple' if type(target) == list else target
+    
+    filename = os.path.abspath(f"{directory}/{name}_hyperparams.json")
 
     try:
         with open(filename, 'r') as file:
@@ -113,10 +115,12 @@ def get_hyperparameters(compe_data, target, outcomes=None):
     class_weight = transformed_dict
     min_samples_leaf = 1
 
+    name = target[0]+'_multiple' if type(target) == list else target
+
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/{target}_hyperparams.json")
+            f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/{name}_hyperparams.json")
 
         try:
             with open(filename, 'r') as file:

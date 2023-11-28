@@ -68,8 +68,9 @@ def save_model(model, train_frame, test_frame, FEATURES, target, compe_data):
         f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/")
     os.makedirs(directory, exist_ok=True)
 
+    name = target[0]+'_multiple' if type(target) == list else target
     # Save the model
-    filename = os.path.abspath(f"{directory}/{target}_model.joblib")
+    filename = os.path.abspath(f"{directory}/{name}_model.joblib")
 
     joblib.dump(model, filename)
 

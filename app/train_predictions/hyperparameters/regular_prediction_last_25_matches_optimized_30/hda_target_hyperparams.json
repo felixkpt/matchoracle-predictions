@@ -1,0 +1,35 @@
+{
+    "25": {
+        "class_weight": {
+            "0": 1.111,
+            "1": 1.778,
+            "2": 1.667
+        },
+        "max_features": null,
+        "min_samples_leaf": 7,
+        "min_samples_split": 50,
+        "n_estimators": 216,
+        "random_state": 1,
+        "prediction_type": "regular_prediction_last_25_matches_optimized_30",
+        "train_counts": 1035,
+        "test_counts": 345,
+        "occurrences": {
+            "0": 45.72,
+            "1": 28.48,
+            "2": 25.8
+        },
+        "last_predicted": {
+            "0": 48.7,
+            "1": 31.01,
+            "2": 20.29
+        },
+        "accuracy_score": 43,
+        "precision_score": 43,
+        "f1_score": 43,
+        "average_score": 43,
+        "from_date": "2020-08-08 22:00:00",
+        "to_date": "2023-09-27 22:00:00",
+        "created_at": "2023-11-28 17:55:09",
+        "updated_at": "2023-11-28 17:55:09"
+    }
+}

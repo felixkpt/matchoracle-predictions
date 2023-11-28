@@ -69,7 +69,10 @@ class ModelMetrics:
                 print(f"  Precision Score: {metrics_data['precision_score']}%")
                 print(f"  F1 Score: {metrics_data['f1_score']}%")
                 print(f"  Average Score: {metrics_data['average_score']}%\n")
+                
                 average_score_totals += metrics_data['average_score']
+                # average_score_totals += metrics_data['accuracy_score']
+                # average_score_totals += metrics_data['f1_score']
 
             aggregated_average_score = round(average_score_totals / counts, 2)
             # Store competition_metrics in the overall aggregated_average_score dictionary

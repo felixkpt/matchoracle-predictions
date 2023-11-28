@@ -1,10 +1,12 @@
 from train import train
+from train_chained import train_chained
+from combine_important_features import combine_important_features
 from predict import predict
+from metrics import metrics
 from app.auth.get_user_token import get_user_token
 from configs.settings import EMAIL, PASSWORD
 from configs.logger import Logger
-from app.model_metrics import ModelMetrics
-import os
+import sys
 
 
 def main():
@@ -17,27 +19,39 @@ def main():
 
         print('______ PREDICTIONS APP START ______\n')
 
-        train(user_token)
+        task = None
+        for arg in sys.argv:
+            if arg.startswith('task'):
+                parts = arg.split('=')
+                if len(parts) == 2:
+                    task = parts[1]
 
-        # predict(user_token)
+        if task == None:
+            print('Please choose a task to continue\n')
+            return
 
-        target = 'hda_target'
-        target = 'bts_target'
-        # target = 'over25_target'
-        # target = 'cs_target'
+        if task == 'train':
+            print('Task: Train\n')
+            train(user_token)
 
-        prediction_types = [
-            'regular_prediction_last_5_matches_optimized',
-            'regular_prediction_last_7_matches_optimized',
-            'regular_prediction_last_10_matches_optimized',
-            'regular_prediction_last_15_matches_optimized',
-            'regular_prediction_last_20_matches_optimized',
-            'regular_prediction_last_25_matches_optimized',
-        ]
+        elif task == 'train_chained':
+            print('Task: Train chained\n')
+            train_chained(user_token)
 
-        model_metrics = ModelMetrics(target, prediction_types)
-        comparison_results = model_metrics.compare_models()
-        model_metrics.choose_best_model(comparison_results)
+        elif task == 'predict':
+            print('Task: Predict\n')
+            predict(user_token)
+
+        elif task == 'metrics':
+            print('Task: ModelMetrics\n')
+            metrics(user_token)
+
+        elif task == 'combine_important_features':
+            print('Task: Combine important features\n')
+            combine_important_features(user_token)
+
+        else:
+            print('Invalid task\n')
 
         print('\n______ PREDICTIONS APP END ______')
 
