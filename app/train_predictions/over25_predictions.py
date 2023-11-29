@@ -14,7 +14,7 @@ def over25_predictions(user_token, train_matches, test_matches, compe_data, do_g
 
     Logger.info(f"Prediction Target: {target}")
     
-    features, has_features = get_features(compe_data, target)
+    features, has_features = get_features(compe_data, target, do_grid_search)
     FEATURES = features
     print(f"Has filtered features: {'Yes' if has_features else 'No'}")
 
@@ -35,6 +35,7 @@ def over25_predictions(user_token, train_matches, test_matches, compe_data, do_g
 
     best_params = None
     if do_grid_search or not has_weights:
+        do_grid_search = True
         best_params = grid_search(
             model, train_frame, FEATURES, target, occurrences, is_random_search)
 
@@ -44,18 +45,19 @@ def over25_predictions(user_token, train_matches, test_matches, compe_data, do_g
     Logger.info(
         f"Hyper Params {'(default)' if not has_weights else ''}: {hyper_params}\n")
 
-    # Save model if update_model is set
-    if update_model:
-        save_model(model, train_frame, test_frame,
-                   FEATURES, target, compe_data)
-
     model.fit(train_frame[FEATURES], train_frame[target])
 
     # Make predictions on the test data
     preds = model.predict(test_frame[FEATURES])
     predict_proba = model.predict_proba(test_frame[FEATURES])
 
-    feature_importance(model, compe_data, target, FEATURES, False, 0.007)
+    FEATURES = feature_importance(
+        model, compe_data, target, FEATURES, False, 0.007)
+
+    # Save model if update_model is set
+    if update_model:
+        save_model(model, train_frame, test_frame,
+                   FEATURES, target, compe_data)
 
     predict_proba = normalizer(predict_proba)
 

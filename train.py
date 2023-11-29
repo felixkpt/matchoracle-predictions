@@ -50,7 +50,7 @@ def train(user_token):
         be_params = from_date, to_date, history_limit_per_match
         # Load train and test data for all targets
         train_matches, test_matches = load_for_training(
-            COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.75, ignore_saved=ignore_saved)
+            COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=ignore_saved)
 
         total_matches = len(train_matches) + len(test_matches)
 
@@ -75,13 +75,13 @@ def train(user_token):
         hda_predictions(user_token, train_matches, test_matches, compe_data,
                         is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
-        bts_predictions(user_token, train_matches, test_matches, compe_data,
-                        is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        # bts_predictions(user_token, train_matches, test_matches, compe_data,
+        #                 is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
-        over25_predictions(user_token, train_matches, test_matches, compe_data,
-                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        # over25_predictions(user_token, train_matches, test_matches, compe_data,
+        #                    is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
-        cs_predictions(user_token, train_matches, test_matches, compe_data,
-                       is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        # cs_predictions(user_token, train_matches, test_matches, compe_data,
+        #                is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")

@@ -18,7 +18,7 @@ def cs_predictions_normalizer(user_token, train_matches, test_matches, compe_dat
 
     Logger.info(f"Prediction Target: {target}")
     
-    features, has_features = get_features(compe_data, target)
+    features, has_features = get_features(compe_data, target, do_grid_search)
     FEATURES = features
     print(f"Has filtered features: {'Yes' if has_features else 'No'}")
 
@@ -40,6 +40,7 @@ def cs_predictions_normalizer(user_token, train_matches, test_matches, compe_dat
 
     best_params = None
     if do_grid_search or not has_weights:
+        do_grid_search = True
         best_params = grid_search(
             model, train_frame, FEATURES, target, occurrences, is_random_search)
 

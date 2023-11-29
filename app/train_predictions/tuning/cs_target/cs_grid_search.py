@@ -2,7 +2,7 @@ from sklearn.metrics import f1_score, accuracy_score, precision_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
-from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
+from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, best_parms_to_fractions
 import numpy as np
 from itertools import product
 
@@ -30,7 +30,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
     
-    n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
+    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyperparameters_array_generator(
         train_frame, 4, 1.3, 4)
 
     outcomes = train_frame[target].unique()
@@ -64,8 +64,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'class_weight': [{0: 1}],
-        'min_samples_leaf': [3, 5, 7],
+        'class_weight': [None],
+        'min_samples_leaf': min_samples_leaf,
         'max_features': [None]
     }
 
@@ -98,7 +98,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    return best_params
+    return best_parms_to_fractions(best_params, train_frame)
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({

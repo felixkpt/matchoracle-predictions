@@ -2,7 +2,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
-from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
+from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, best_parms_to_fractions
 import numpy as np
 
 # Set a random seed for reproducibility
@@ -13,8 +13,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
-    n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 5, 1.3, 4)
+    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyperparameters_array_generator(
+        train_frame, 4, 1.35, 4)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -35,19 +35,21 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'min_samples_leaf': [3, 5],
-        'class_weight': class_weight,
+        'class_weight': [None],
+        'min_samples_leaf': min_samples_leaf,
+        'max_features': [None]
     }
 
     # Fitting grid search to the train data
+    n_splits = 3
     if not is_random_search:
         gridsearch = GridSearchCV(
             estimator=model,
             param_grid=param_grid,
-            cv=StratifiedKFold(n_splits=5),
+            cv=StratifiedKFold(n_splits=n_splits),
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
-            verbose=2,
+            verbose=3,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
@@ -55,7 +57,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             estimator=model,
             param_distributions=param_grid,
             n_iter=10,
-            cv=5,
+            cv=n_splits,
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             random_state=42,
@@ -68,7 +70,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    return best_params
+    return best_parms_to_fractions(best_params, train_frame)
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({
@@ -133,6 +135,6 @@ def scorer(estimator, X, y_true, occurrences):
 
     recall = recall_score(y_true, y_pred, average='weighted', zero_division=0)
 
-    score = 0.2 * accuracy + 0.4 * recall + 0.4 * natural_score
+    score = 0.3 * accuracy + 0.4 * recall + 0.3 * natural_score
 
     return score

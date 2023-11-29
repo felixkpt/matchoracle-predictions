@@ -10,20 +10,16 @@ from dateutil.relativedelta import relativedelta
 import json
 import requests
 
-# Define constants
-HISTORY_LIMITS = [5, 10, 15, 20]
-HISTORY_LIMITS = [10]
-PREDICTION_TYPE = 'regular_prediction'
 # Campeonato Brasileiro Série A, Championship, EPL, Portugal primera, LaLiga
 # 47, 48, 125, 148
 COMPETITION_IDS = [25, 47, 48, 125, 148]
-COMPETITION_IDS = [47]
+# COMPETITION_IDS = [48]
 
 
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
-    PREDICTION_TYPE = f"regular_prediction_last_{10}_matches_refined"
+    PREDICTION_TYPE = "regular_prediction"
 
     for COMPETITION_ID in COMPETITION_IDS:
         # Calculate from_date and to_date
@@ -79,8 +75,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, hd
 
         hda = str(hda_preds[i])
         hda_proba = hda_preds_proba[i]
-        home_win_proba = hda_proba[1]
-        draw_proba = hda_proba[0]
+        home_win_proba = hda_proba[0]
+        draw_proba = hda_proba[1]
         away_win_proba = hda_proba[2]
 
         bts = str(bts_preds[i])
@@ -91,7 +87,7 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, hd
 
         key = cs_preds[i]
         cs = str(cs_preds[i])
-        cs_proba = cs_preds_proba[i][key]
+        cs_proba = 3
 
         pred_obj = {
             'id': match['id'],

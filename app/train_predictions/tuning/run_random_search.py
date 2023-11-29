@@ -13,7 +13,7 @@ def grid_search(model, train_frame, FEATURES, targets, occurrences, is_random_se
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
-    n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
+    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyperparameters_array_generator(
         train_frame, 5, 1.3, 4)
 
     _class_weight = []

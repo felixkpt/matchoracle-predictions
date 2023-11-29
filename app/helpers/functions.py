@@ -145,32 +145,36 @@ def feature_importance(model, compe_data, target, FEATURES, show=True, threshold
     # Save the sorted data back to the JSON file
     with open(filename, 'w') as file:
         json.dump(best_features, file, indent=4)
+    
+    return best_features
 
 
-def get_features(compe_data, target):
+def get_features(compe_data, target, do_grid_search=False):
     COMPETITION_ID = compe_data['id']
     PREDICTION_TYPE = compe_data['prediction_type']
 
     features = COMMON_FEATURES
     has_features = False
 
-    try:
-        # Load hyperparameters data
-        filename = os.path.abspath(
-            f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json")
-
+    if not do_grid_search:
         try:
-            with open(filename, 'r') as file:
-                features_data = parse_json(json.load(file))
+            # Load hyperparameters data
+            filename = os.path.abspath(
+                f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json")
+
+            try:
+                with open(filename, 'r') as file:
+                    features_data = parse_json(json.load(file))
+            except:
+                FileNotFoundError
+
+            # Get the hyperparameters for compe id
+            if len(features_data) > 0:
+                features = features_data
+                has_features = True
+
         except:
-            FileNotFoundError
-
-        # Get the hyperparameters for compe id
-        features = features_data
-        has_features = True
-
-    except:
-        KeyError
+            KeyError
 
     return features, has_features
 

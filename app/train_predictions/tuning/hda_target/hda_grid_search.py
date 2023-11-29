@@ -2,7 +2,8 @@ from sklearn.metrics import f1_score, accuracy_score, precision_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
-from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
+from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, best_parms_to_fractions
+
 import numpy as np
 import pandas as pd
 
@@ -14,8 +15,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
-    n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 10, 2.0, 4)
+    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyperparameters_array_generator(
+        train_frame, 10, 2.0, 5)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -29,7 +30,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     # filtering based on the fact that our model struggles at making 1 and 2 preds, 1 being the worst
     class_weight = []
     for x in _class_weight:
-        if x[0] < 1.3 and x[1] > 1.4 and x[2] < 1.7:
+        if x[0] < 1.3 and x[1] > 1.6 and x[2] < 1.7:
             class_weight.append(x)
 
     # Creating a dictionary grid for grid search
@@ -37,20 +38,21 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'class_weight': class_weight,
-        'min_samples_leaf': [7],
+        'class_weight': [None],
+        'min_samples_leaf': min_samples_leaf,
         'max_features': [None]
     }
 
     # Fitting grid search to the train data
+    n_splits = 3
     if not is_random_search:
         gridsearch = GridSearchCV(
             estimator=model,
             param_grid=param_grid,
-            cv=StratifiedKFold(n_splits=5),
+            cv=StratifiedKFold(n_splits=n_splits),
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
-            verbose=2,
+            verbose=3,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
@@ -58,7 +60,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             estimator=model,
             param_distributions=param_grid,
             n_iter=10,
-            cv=5,
+            cv=n_splits,
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             random_state=42,
@@ -81,8 +83,9 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
 
     # Call the plotting method
     # plot_grid_search_results(weigh_data)
+    
 
-    return best_params
+    return best_parms_to_fractions(best_params, train_frame)
 
 
 def scorer(estimator, X, y_true, occurrences):

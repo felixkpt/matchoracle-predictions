@@ -1,0 +1,18 @@
+[
+    "home_team_id",
+    "away_team_id",
+    "home_team_goals_for_avg",
+    "home_team_goals_against",
+    "home_team_goals_against_avg",
+    "ht_home_team_wins",
+    "current_ground_home_team_loses",
+    "current_ground_home_team_goals_for_avg",
+    "current_ground_home_team_goals_against_avg",
+    "current_ground_away_team_draws",
+    "current_ground_away_team_goals_for_avg",
+    "current_ground_away_team_goals_against",
+    "current_ground_away_team_goals_against_avg",
+    "current_ground_ht_home_team_goals_for_avg",
+    "current_ground_ht_home_team_goals_against_avg",
+    "current_ground_ht_away_team_goals_against_avg"
+]

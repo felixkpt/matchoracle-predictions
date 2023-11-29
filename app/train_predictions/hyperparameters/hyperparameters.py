@@ -11,7 +11,9 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
     # Setting the range for params
     _n_estimators = np.linspace(150, 250, rest_counts)
     class_weight = np.linspace(1.0, class_weight_max, class_weight_counts)
-    _min_samples_splits = np.linspace(10, 50, rest_counts)
+    _min_samples_splits = np.linspace(20, 50, rest_counts)
+    _min_samples_leaf = np.linspace(
+        4, 15 if len_train > 2 else 2, rest_counts)
     _max_depth = np.linspace(
         2, len_train / 10 if len_train > 2 else 2, rest_counts)
 
@@ -25,12 +27,17 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
         x = int(x)
         min_samples_split.append(x)
 
+    min_samples_leaf = []
+    for x in _min_samples_leaf:
+        x = int(x)
+        min_samples_leaf.append(x)
+
     max_depth = [None]
     for x in _max_depth:
         x = int(x)
         max_depth.append(x)
 
-    return [n_estimators, min_samples_split, class_weight]
+    return [n_estimators, min_samples_split, class_weight, min_samples_leaf]
 
 
 def save_hyperparameters(compe_data, target, user_token):
@@ -52,7 +59,7 @@ def save_hyperparameters(compe_data, target, user_token):
     os.makedirs(directory, exist_ok=True)
 
     name = target[0]+'_multiple' if type(target) == list else target
-    
+
     filename = os.path.abspath(f"{directory}/{name}_hyperparams.json")
 
     try:
@@ -162,3 +169,13 @@ def parse_json(json_data):
         return [parse_json(item) for item in json_data]
     else:
         return json_data
+
+
+def best_parms_to_fractions(best_params, train_frame):
+    min_samples_split = best_params['min_samples_split'] / len(train_frame)
+    best_params['min_samples_split'] = round(min_samples_split, 3)
+
+    min_samples_leaf = best_params['min_samples_leaf'] / len(train_frame)
+    best_params['min_samples_leaf'] = round(min_samples_leaf, 3)
+
+    return best_params
