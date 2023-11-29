@@ -13,8 +13,13 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
-    n_estimators, min_samples_split, class_weight, min_samples_leaf = hyperparameters_array_generator(
+    hyper_params = hyperparameters_array_generator(
         train_frame, 4, 1.3, 4)
+    n_estimators = hyper_params['n_estimators']
+    min_samples_split = hyper_params['min_samples_split']
+    class_weight = hyper_params['class_weight']
+    min_samples_leaf = hyper_params['min_samples_leaf']
+    max_depth = hyper_params['max_depth']
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -33,11 +38,14 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     # Creating a dictionary grid for grid search
     param_grid = {
         'random_state': [1],
+        'criterion': ['gini'],
+        'max_depth': max_depth,
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'class_weight': [None],
+        'class_weight': ['balanced'],
         'min_samples_leaf': min_samples_leaf,
-        'max_features': [None]
+        'max_features': [None],
+        'bootstrap': [True],
     }
 
     # Fitting grid search to the train data

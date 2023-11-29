@@ -66,6 +66,6 @@ def hda_predictions(user_token, train_matches, test_matches, compe_data, do_grid
     compe_data['to_date'] = test_matches[-1]['utc_date']
 
     print_preds_update_hyperparams(user_token, target, compe_data,
-                                   preds, predict_proba, train_frame, test_frame, print_minimal=True)
+                                   preds, predict_proba, train_frame, test_frame, print_minimal=False)
 
     return [preds, predict_proba, occurrences]

@@ -37,7 +37,13 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
         x = int(x)
         max_depth.append(x)
 
-    return [n_estimators, min_samples_split, class_weight, min_samples_leaf]
+    return {
+        'n_estimators': n_estimators,
+        'min_samples_split': min_samples_split,
+        'class_weight': class_weight,
+        'min_samples_leaf': min_samples_leaf,
+        'max_depth': max_depth,
+    }
 
 
 def save_hyperparameters(compe_data, target, user_token):
@@ -120,6 +126,8 @@ def get_hyperparameters(compe_data, target, outcomes=None):
     min_samples_split = 2
     transformed_dict = {key: 1 for key in outcomes or [0, 1]}
     class_weight = transformed_dict
+    bootstrap = False
+    criterion = 'gini'
     min_samples_leaf = 1
 
     name = target[0]+'_multiple' if type(target) == list else target
@@ -140,18 +148,22 @@ def get_hyperparameters(compe_data, target, outcomes=None):
 
         hyper_params = best_params
         n_estimators = hyper_params['n_estimators']
+        criterion = hyper_params['criterion']
         min_samples_split = hyper_params['min_samples_split']
         min_samples_leaf = hyper_params['min_samples_leaf']
         class_weight = hyper_params['class_weight']
+        bootstrap = hyper_params['bootstrap']
         has_weights = True
     except:
         KeyError
 
     hyper_params = {
         'n_estimators': n_estimators,
+        'criterion': criterion,
         'min_samples_split': min_samples_split,
         'min_samples_leaf': min_samples_leaf,
         'class_weight': class_weight,
+        'bootstrap': bootstrap,
     }
 
     return [hyper_params, has_weights]
