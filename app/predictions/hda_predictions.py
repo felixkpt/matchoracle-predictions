@@ -11,6 +11,7 @@ def hda_predictions(matches, compe_data):
     
     Logger.info(f"Prediction Target: {target}")
 
+
     features, has_features = get_features(compe_data, target)
     FEATURES = features
     print(f"Has filtered features: {'Yes' if has_features else 'No'}")
@@ -18,6 +19,7 @@ def hda_predictions(matches, compe_data):
     # Create train and test DataFrames
     predict_frame = pd.DataFrame(matches)
 
+    # print(matches[2])
     # Get the model
     model = get_model(target, compe_data)
 

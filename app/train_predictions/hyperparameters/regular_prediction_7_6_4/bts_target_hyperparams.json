@@ -1,0 +1,162 @@
+{
+    "25": {
+        "bootstrap": false,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_samples_leaf": 0.005,
+        "min_samples_split": 0.037,
+        "n_estimators": 150,
+        "random_state": 1,
+        "n_estimators_fraction": 0.186,
+        "prediction_type": "regular_prediction_7_6_4",
+        "train_counts": 807,
+        "test_counts": 347,
+        "occurrences": {
+            "0": 51.91,
+            "1": 48.09
+        },
+        "last_predicted": {
+            "0": 53.03,
+            "1": 46.97
+        },
+        "accuracy_score": 51,
+        "precision_score": 51,
+        "f1_score": 51,
+        "average_score": 51,
+        "from_date": "2020-09-27 23:30:00",
+        "to_date": "2023-08-27 22:00:00",
+        "created_at": "2023-12-05 01:53:13",
+        "updated_at": "2023-12-05 01:53:13"
+    },
+    "47": {
+        "bootstrap": false,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_samples_leaf": 0.004,
+        "min_samples_split": 0.029,
+        "n_estimators": 150,
+        "random_state": 1,
+        "n_estimators_fraction": 0.143,
+        "prediction_type": "regular_prediction_7_6_4",
+        "train_counts": 1052,
+        "test_counts": 451,
+        "occurrences": {
+            "0": 51.56,
+            "1": 48.44
+        },
+        "last_predicted": {
+            "0": 47.23,
+            "1": 52.77
+        },
+        "accuracy_score": 45,
+        "precision_score": 45,
+        "f1_score": 45,
+        "average_score": 45,
+        "from_date": "2020-11-24 19:00:00",
+        "to_date": "2023-08-27 11:00:00",
+        "created_at": "2023-12-05 02:03:50",
+        "updated_at": "2023-12-05 02:03:50"
+    },
+    "48": {
+        "bootstrap": false,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_samples_leaf": 0.01,
+        "min_samples_split": 0.055,
+        "n_estimators": 150,
+        "random_state": 1,
+        "n_estimators_fraction": 0.205,
+        "prediction_type": "regular_prediction_7_6_4",
+        "train_counts": 732,
+        "test_counts": 314,
+        "occurrences": {
+            "0": 49.71,
+            "1": 50.29
+        },
+        "last_predicted": {
+            "0": 43.31,
+            "1": 56.69
+        },
+        "accuracy_score": 50,
+        "precision_score": 50,
+        "f1_score": 50,
+        "average_score": 50,
+        "from_date": "2020-12-15 18:00:00",
+        "to_date": "2023-08-27 15:30:00",
+        "created_at": "2023-12-05 02:10:39",
+        "updated_at": "2023-12-05 02:10:39"
+    },
+    "125": {
+        "bootstrap": false,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_samples_leaf": 0.028,
+        "min_samples_split": 0.093,
+        "n_estimators": 150,
+        "random_state": 1,
+        "n_estimators_fraction": 0.279,
+        "prediction_type": "regular_prediction_7_6_4",
+        "train_counts": 538,
+        "test_counts": 231,
+        "occurrences": {
+            "0": 52.67,
+            "1": 47.33
+        },
+        "last_predicted": {
+            "0": 50.65,
+            "1": 49.35
+        },
+        "accuracy_score": 49,
+        "precision_score": 49,
+        "f1_score": 49,
+        "average_score": 49,
+        "from_date": "2021-01-08 18:00:00",
+        "to_date": "2023-08-28 19:15:00",
+        "created_at": "2023-12-05 02:14:06",
+        "updated_at": "2023-12-05 02:14:06"
+    },
+    "148": {
+        "bootstrap": false,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_samples_leaf": 0.006,
+        "min_samples_split": 0.029,
+        "n_estimators": 150,
+        "random_state": 1,
+        "n_estimators_fraction": 0.219,
+        "prediction_type": "regular_prediction_7_6_4",
+        "train_counts": 685,
+        "test_counts": 294,
+        "occurrences": {
+            "0": 49.64,
+            "1": 50.36
+        },
+        "last_predicted": {
+            "0": 60.54,
+            "1": 39.46
+        },
+        "accuracy_score": 51,
+        "precision_score": 50,
+        "f1_score": 50,
+        "average_score": 50,
+        "from_date": "2020-12-12 13:00:00",
+        "to_date": "2023-08-28 19:30:00",
+        "created_at": "2023-12-05 02:18:10",
+        "updated_at": "2023-12-05 02:18:10"
+    }
+}

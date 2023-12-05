@@ -10,12 +10,17 @@ class ModelMetrics:
         self.metrics = self.load_metrics()
 
     def load_metrics(self):
+
+        exclude_ids = [125, 148]
         metrics = {}
         for prediction_type in self.prediction_types:
             json_path = os.path.join(
                 self.base_path, f'{prediction_type}/{self.target}_hyperparams.json')
             with open(json_path, 'r') as file:
-                metrics[prediction_type] = json.load(file)
+                json_content = json.load(file)
+                filtered = {comp_id: comp_data for comp_id, comp_data in json_content.items(
+                ) if int(comp_id) not in exclude_ids}
+                metrics[prediction_type] = filtered
         return metrics
 
     def compare_models(self):
@@ -34,6 +39,8 @@ class ModelMetrics:
             competition_metrics = {}
 
             for competition_id in competition_ids:
+                print(f'Competition ID: {competition_id}\n')
+
                 metrics_data = self.metrics[prediction_type][competition_id]
 
                 # Retrieve metrics from current competition
@@ -69,12 +76,12 @@ class ModelMetrics:
                 print(f"  Precision Score: {metrics_data['precision_score']}%")
                 print(f"  F1 Score: {metrics_data['f1_score']}%")
                 print(f"  Average Score: {metrics_data['average_score']}%\n")
-                
+
                 average_score_totals += metrics_data['average_score']
                 # average_score_totals += metrics_data['accuracy_score']
                 # average_score_totals += metrics_data['f1_score']
 
-            aggregated_average_score = round(average_score_totals / counts, 2)
+            aggregated_average_score = round(average_score_totals / counts, 3)
             # Store competition_metrics in the overall aggregated_average_score dictionary
             aggregated_average_scores.append({
                 'prediction_type': prediction_type,
@@ -92,10 +99,10 @@ class ModelMetrics:
         # Dictionary to store the total average score for each prediction type
         total_average_scores = {}
         for dictionary in comparison_results:
-            
+
             prediction_type = dictionary['prediction_type']
             aggregated_average_score = dictionary['aggregated_average_score']
-            
+
             print(
                 f"Total average score for Prediction Type {prediction_type} is {aggregated_average_score}%\n")
             # Store the total average score in the dictionary

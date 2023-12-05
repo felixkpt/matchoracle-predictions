@@ -1,0 +1,23 @@
+[
+    "day_of_week",
+    "away_team_id",
+    "home_team_goals_for_avg",
+    "home_team_goals_against",
+    "home_team_goals_against_avg",
+    "home_team_over25_games",
+    "away_team_over35_games",
+    "ht_home_team_draws",
+    "ht_home_team_goals_for",
+    "ht_away_team_draws",
+    "ht_away_team_goals_for_avg",
+    "current_ground_away_team_over35_games",
+    "current_ground_ht_home_team_goals_for_avg",
+    "current_ground_ht_home_team_goals_against_avg",
+    "current_ground_ht_away_team_loses",
+    "h2h_home_team_goals_against_avg",
+    "h2h_home_team_over25_games",
+    "h2h_away_team_goals_for_avg",
+    "h2h_away_team_over25_games",
+    "h2h_ht_home_team_goals_for",
+    "h2h_ht_away_team_goals_against"
+]

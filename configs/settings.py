@@ -3,13 +3,12 @@ PASSWORD = "admin@example.com"
 
 API_BASE_URL = "http://matchoracle-be2.local/api"
 
+HISTORY_LIMITS = [7, 10, 12, 15]
+
 # Define predictors used for training
 COMMON_FEATURES = [
     'hour',
     'day_of_week',
-    'competition_id',
-    'season_id',
-    'country_id',
     'referees_ids',
     'home_team_id',
     'away_team_id',
@@ -169,4 +168,47 @@ COMMON_FEATURES = [
     'h2h_ht_away_team_over15_games',
     'h2h_ht_away_team_over25_games',
     'h2h_ht_away_team_over35_games',
+
+    'team_lp_home_team_position',
+    'team_lp_home_team_played_games',
+    'team_lp_home_team_won',
+    'team_lp_home_team_lost',
+    'team_lp_home_team_points',
+    'team_lp_home_team_goals_for',
+    'team_lp_home_team_goals_against',
+    'team_lp_home_team_goal_difference',
+    'team_lp_away_team_position',
+    'team_lp_away_team_played_games',
+    'team_lp_away_team_won',
+    'team_lp_away_team_lost',
+    'team_lp_away_team_points',
+    'team_lp_away_team_goals_for',
+    'team_lp_away_team_goals_against',
+    'team_lp_away_team_goal_difference',
+
+]
+
+NORMALIZER_COMMON_FEATURES = [
+    'competition_id',
+    'hour',
+    'day_of_week',
+    'game_id',
+    'hda',
+    'home_win_proba',
+    'draw_proba',
+    'away_win_proba',
+    'bts',
+    'gg_proba',
+    'ng_proba',
+    'over15',
+    'over15_proba',
+    'under15_proba',
+    'over25',
+    'over25_proba',
+    'under25_proba',
+    'over35',
+    'over35_proba',
+    'under35_proba',
+    'cs',
+    'cs_proba',
 ]

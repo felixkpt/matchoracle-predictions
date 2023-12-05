@@ -1,21 +1,25 @@
-from sklearn.metrics import f1_score, accuracy_score, precision_score
+from app.helpers.functions import combined_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, best_parms_to_fractions
 
 import numpy as np
-import pandas as pd
 
 # Set a random seed for reproducibility
 np.random.seed(42)
 
+# Function for conducting grid search on a model
 
-def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False):
+
+def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False, score_weights=None):
+    if not score_weights:
+        score_weights = [0, 0.4, 0.3, 0.3]
+
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
-    
+    # Generate hyperparameters array for the grid search
     hyper_params = hyperparameters_array_generator(
         train_frame, 10, 2.0, 5)
     n_estimators = hyper_params['n_estimators']
@@ -24,30 +28,31 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     min_samples_leaf = hyper_params['min_samples_leaf']
     max_depth = hyper_params['max_depth']
 
+    # Create class_weight combinations
     _class_weight = []
     for i, x in enumerate(class_weight):
-
         for j in class_weight:
             for k in class_weight:
                 res = {0: round(class_weight[i], 3),
                        1: round(j, 3), 2: round(k, 3)}
                 _class_weight.append(res)
 
-    # filtering based on the fact that our model struggles at making 1 and 2 preds, 1 being the worst
+    # Filtering class_weight based on specified conditions
     class_weight = []
     for x in _class_weight:
         if x[0] < 1.3 and x[1] > 1.6 and x[2] < 1.7:
             class_weight.append(x)
 
-    # Creating a dictionary grid for grid search
+    # Define the grid for grid search
     param_grid = {
         'random_state': [1],
         'criterion': ['gini'],
-        'max_depth': max_depth,
+        'max_depth': [None],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
         'class_weight': ['balanced'],
         'min_samples_leaf': min_samples_leaf,
+        'max_leaf_nodes': [None],
         'max_features': [None],
         'bootstrap': [True],
     }
@@ -60,7 +65,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             param_grid=param_grid,
             cv=StratifiedKFold(n_splits=n_splits),
             scoring=lambda estimator, X, y_true: scorer(
-                estimator, X, y_true, occurrences),
+                estimator, X, y_true, occurrences, score_weights),
             verbose=3,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
@@ -71,7 +76,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             n_iter=10,
             cv=n_splits,
             scoring=lambda estimator, X, y_true: scorer(
-                estimator, X, y_true, occurrences),
+                estimator, X, y_true, occurrences, score_weights),
             random_state=42,
             verbose=3,
         ).fit(train_frame[FEATURES], train_frame[target])
@@ -82,22 +87,16 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    # Create a DataFrame to store the grid search results
-    # weigh_data = pd.DataFrame({
-    #     'score': gridsearch.cv_results_['mean_test_score'],
-    #     'weight_0': [x[0] for x in class_weight],
-    #     'weight_1': [x[1] for x in class_weight],
-    #     'weight_2': [x[2] for x in class_weight]
-    # })
+    return {
+        'best_params': best_parms_to_fractions(best_params, train_frame),
+        'best_score': best_score,
+        'score_weights': score_weights,
+    }
 
-    # Call the plotting method
-    # plot_grid_search_results(weigh_data)
-    
-
-    return best_parms_to_fractions(best_params, train_frame)
+# Custom scorer function for the grid search
 
 
-def scorer(estimator, X, y_true, occurrences):
+def scorer(estimator, X, y_true, occurrences, score_weights):
     occurance_outcome_0 = occurrences.get(0, 0)
     occurance_outcome_1 = occurrences.get(1, 0)
     occurance_outcome_2 = occurrences.get(2, 0)
@@ -122,19 +121,9 @@ def scorer(estimator, X, y_true, occurrences):
     natural_score = 1 - (1.5 * max_diff / 100)  # Normalize to [0, 1]
     natural_score = natural_score if natural_score >= 0 else 0
 
-    # print(f"NATURAL: 0: {occurance_outcome_0}, 1: {occurance_outcome_1}, 2: {occurance_outcome_2}")
-    # print(f"PREDICT: 0: {y_pred_0}, 1: {y_pred_1}, 2: {y_pred_2}")
-    # print(f"TOTALS: {totals}, Ntrl score: {round(natural_score, 3)}")
+    combined = combined_score(y_true, y_pred, score_weights, natural_score)
 
-    # Calculate other required scorers and combine
-    precision = precision_score(
-        y_true, y_pred, average='weighted', zero_division=0)
-
-    f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
-
-    combined_score = 0.3 * precision + 0.4 * f1 + 0.3 * natural_score
-
-    return combined_score
+    return combined
 
 
 def plot_grid_search_results(weigh_data):

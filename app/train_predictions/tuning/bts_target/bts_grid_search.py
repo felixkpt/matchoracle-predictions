@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from app.helpers.functions import combined_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
@@ -9,7 +9,10 @@ import numpy as np
 np.random.seed(42)
 
 
-def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False):
+def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False, score_weights=None):
+    if not score_weights:
+        score_weights = [0, 0.4, 0.3, 0.3]
+
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
@@ -39,24 +42,25 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     param_grid = {
         'random_state': [1],
         'criterion': ['gini'],
-        'max_depth': max_depth,
+        'max_depth': [None],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
         'class_weight': ['balanced'],
         'min_samples_leaf': min_samples_leaf,
+        'max_leaf_nodes': [None],
         'max_features': [None],
         'bootstrap': [True],
     }
 
     # Fitting grid search to the train data
-    n_splits = 3
+    n_splits = 4
     if not is_random_search:
         gridsearch = GridSearchCV(
             estimator=model,
             param_grid=param_grid,
             cv=StratifiedKFold(n_splits=n_splits),
             scoring=lambda estimator, X, y_true: scorer(
-                estimator, X, y_true, occurrences),
+                estimator, X, y_true, occurrences, score_weights),
             verbose=3,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
@@ -67,7 +71,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             n_iter=10,
             cv=n_splits,
             scoring=lambda estimator, X, y_true: scorer(
-                estimator, X, y_true, occurrences),
+                estimator, X, y_true, occurrences, score_weights),
             random_state=42,
             verbose=3,
         ).fit(train_frame[FEATURES], train_frame[target])
@@ -78,32 +82,16 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    return best_parms_to_fractions(best_params, train_frame)
+    return {
+        'best_params': best_parms_to_fractions(best_params, train_frame),
+        'best_score': best_score,
+        'score_weights': score_weights,
+    }
 
-    # Create a DataFrame to store the grid search results
-    # weigh_data = pd.DataFrame({
-    #     'score': gridsearch.cv_results_['mean_test_score'],
-    #     'weight': [1 - x for x in class_weight]
-    # })
-
-    # Set up the plot
-    # sns.set_style('whitegrid')
-    # plt.figure(figsize=(12, 8))
-
-    # # Create the line plot for class weight vs. F1 score
-    # sns.lineplot(x=weigh_data['weight'], y=weigh_data['score'])
-
-    # # Add labels and ticks to the plot
-    # plt.xlabel('Weight for class 1')
-    # plt.ylabel('F1 score')
-    # plt.xticks([round(i / 10, 1) for i in range(0, 11, 1)])
-    # plt.title('Scoring for different class weights', fontsize=24)
-
-    # # Show the plot
-    # plt.show()
+# Custom scorer function for the grid search
 
 
-def scorer(estimator, X, y_true, occurrences):
+def scorer(estimator, X, y_true, occurrences, score_weights):
     occurance_outcome_0 = occurrences.get(0, 0)
     occurance_outcome_1 = occurrences.get(1, 0)
 
@@ -138,11 +126,27 @@ def scorer(estimator, X, y_true, occurrences):
     # print(f"PREDICT: No: {y_pred_0}, Yes: {y_pred_1}")
     # print(f"TOTALS: {totals}, Ntrl score: {round(natural_score, 3)}")
 
-    # Calculate other required scorers and combine
-    accuracy = accuracy_score(y_true, y_pred)
+    combined = combined_score(y_true, y_pred, score_weights, natural_score)
 
-    recall = recall_score(y_true, y_pred, average='weighted', zero_division=0)
+    return combined
 
-    score = 0.3 * accuracy + 0.4 * recall + 0.3 * natural_score
 
-    return score
+def plot_grid_search_results(weigh_data):
+    # Set up the plot
+    sns.set_style('whitegrid')
+    plt.figure(figsize=(12, 8))
+
+    # Create a 3D plot for class weights vs. F1 score
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(weigh_data['weight_0'], weigh_data['weight_1'],
+               weigh_data['weight_2'], c=weigh_data['score'], cmap='viridis', s=100)
+
+    # Add labels and ticks to the plot
+    ax.set_xlabel('Weight for class 0')
+    ax.set_ylabel('Weight for class 1')
+    ax.set_zlabel('Weight for class 2')
+    ax.set_title('Scoring for different class weights', fontsize=24)
+
+    # Show the plot
+    plt.show()

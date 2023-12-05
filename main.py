@@ -3,6 +3,7 @@ from train_chained import train_chained
 from combine_important_features import combine_important_features
 from predict import predict
 from metrics import metrics
+from realtime_metrics import realtime_metrics
 from app.auth.get_user_token import get_user_token
 from configs.settings import EMAIL, PASSWORD
 from configs.logger import Logger
@@ -45,6 +46,10 @@ def main():
         elif task == 'metrics':
             print('Task: ModelMetrics\n')
             metrics(user_token)
+
+        elif task == 'realtime_metrics':
+            print('Task: Realtime ModelMetrics\n')
+            realtime_metrics(user_token)
 
         elif task == 'combine_important_features':
             print('Task: Combine important features\n')

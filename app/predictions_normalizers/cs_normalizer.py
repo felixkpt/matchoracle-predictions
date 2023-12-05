@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def normalizer(predict_proba):
     # Given decision function values
     pred_proba_values = np.array(predict_proba)
@@ -15,6 +16,6 @@ def normalizer(predict_proba):
 
     for i, percentage in enumerate(percentages):
         match_data = [round(p, 2) for p in percentage]
-        normalized_preds.append(match_data)
+        normalized_preds.append(max(match_data))
 
     return normalized_preds

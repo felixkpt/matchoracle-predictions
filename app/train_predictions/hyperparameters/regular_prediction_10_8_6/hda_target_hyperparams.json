@@ -1,0 +1,36 @@
+{
+    "25": {
+        "bootstrap": false,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "max_leaf_nodes": null,
+        "min_samples_leaf": 0.012,
+        "min_samples_split": 0.046,
+        "n_estimators": 150,
+        "random_state": 1,
+        "n_estimators_fraction": 0.196,
+        "prediction_type": "regular_prediction_10_8_6",
+        "train_counts": 764,
+        "test_counts": 328,
+        "occurrences": {
+            "0": 46.52,
+            "1": 27.93,
+            "2": 25.55
+        },
+        "last_predicted": {
+            "0": 47.87,
+            "1": 18.6,
+            "2": 33.54
+        },
+        "accuracy_score": 48,
+        "precision_score": 48,
+        "f1_score": 47,
+        "average_score": 47,
+        "from_date": "2020-10-14 23:30:00",
+        "to_date": "2023-08-27 22:00:00",
+        "created_at": "2023-12-05 08:57:56",
+        "updated_at": "2023-12-05 08:57:56"
+    }
+}

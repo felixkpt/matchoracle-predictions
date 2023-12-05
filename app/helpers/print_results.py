@@ -23,9 +23,9 @@ def print_preds_update_hyperparams(user_token, target, compe_data, preds, predic
     if target == 'bts_target':
         print_bts_predictions(user_token, target, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)
-    if target == 'over25_target':
-        print_over25_predictions(user_token, target, compe_data, preds,
-                                 predict_proba, train_frame, test_frame, print_minimal)
+    if target == 'over15_target' or target == 'over25_target' or target == 'over35_target':
+        print_over_predictions(user_token, target, compe_data, preds,
+                               predict_proba, train_frame, test_frame, print_minimal)
     if target == 'cs_target':
         print_cs_predictions(user_token, target, compe_data, preds,
                              predict_proba, train_frame, test_frame, print_minimal)
@@ -111,7 +111,7 @@ def print_bts_predictions(user_token, target, compe_data, preds, predict_proba, 
         print(f"Predictions: {preds}")
 
 
-def print_over25_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_over_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
     total_predictions, class_counts = header(compe_data, preds)
 
@@ -166,8 +166,7 @@ def print_cs_predictions(user_token, target, compe_data, preds, predict_proba, t
     if not print_minimal:
         # Print the percentages for each match
         for i, pred in enumerate(preds):
-            proba = max(predict_proba[i])
-
+            proba = predict_proba[i]
             cs = int(pred)
             print(
                 f"Match {i + 1}: CS: {cs} ({proba}%)")
@@ -182,7 +181,7 @@ def print_cs_predictions(user_token, target, compe_data, preds, predict_proba, t
             predicted[cs] = round(predicted[cs] / preds_len * 100, 2)
 
         predicted = dict(
-        sorted(predicted.items(), key=lambda x: int(x[0])))
+            sorted(predicted.items(), key=lambda x: int(x[0])))
         print(f"")
 
         print(f"Predictions: {preds}")

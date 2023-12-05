@@ -8,16 +8,23 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+    COMPETITION_ID = compe_data['id']
+    PREDICTION_TYPE = compe_data['prediction_type']
 
-    from_date, to_date, history_limit_per_match = be_params
+    from_date_str = be_params['from_date'].strftime("%Y-%m-%d")
+    to_date_str = be_params['to_date'].strftime("%Y-%m-%d")
+    history_limit_per_match = be_params['history_limit_per_match']
+    current_ground_limit_per_match = be_params['current_ground_limit_per_match']
+    h2h_limit_per_match = be_params['h2h_limit_per_match']
 
-    from_date_str = from_date.strftime("%Y-%m-%d")
-    to_date_str = to_date.strftime("%Y-%m-%d")
+    # Create the directory if it doesn't exist
+    directory = os.path.abspath(
+        f"app/matches/saved/{PREDICTION_TYPE}/")
+    os.makedirs(directory, exist_ok=True)
 
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(
-        dirname, f"saved/{COMPETITION_ID}_matches.json")
+    # Save the features
+    filename = os.path.abspath(f"{directory}/{COMPETITION_ID}_matches.json")
 
     loaded_results = None
     if not ignore_saved:
@@ -33,7 +40,7 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)
@@ -45,7 +52,7 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
         # Data found in json file, use it
         all_matches = loaded_results
 
-    all_matches = add_features(all_matches)
+    all_matches = add_features(all_matches, key='utc_date')
     total_matches = len(all_matches)
 
     train_size = int(total_matches * train_ratio)
@@ -57,10 +64,16 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
     return train_matches, test_matches
 
 
-def load_for_predictions(COMPETITION_ID, TARGET_DATE, user_token):
+def load_for_predictions(COMPETITION_ID, user_token, be_params):
+
+    target_date, history_limit_per_match = be_params
+    target_date = be_params['target_date']
+    history_limit_per_match = be_params['history_limit_per_match']
+    current_ground_limit_per_match = be_params['current_ground_limit_per_match']
+    h2h_limit_per_match = be_params['h2h_limit_per_match']
 
     # Now that you have the user token, you can use it for other API requests.
-    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={TARGET_DATE}&with_stats=1"
+    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={target_date}&with_stats=1&order_by=utc_date&order_direction=desc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
 
     matches_data = get(url=url, user_token=user_token, filter=False)
 
@@ -85,11 +98,17 @@ def get(url, user_token, filter=True):
 
     matches_data = []
     for match in all_matches:
+        stats = {}
+        if 'stats' in match:
+            stats = match['stats']
 
-        stats = match['stats']
+            if stats == None:
+                continue
 
-        # We will filter if load_for_training, dont filter if load_for_predictions
-        if filter == True and not stats['has_results']:
+            # We will filter if load_for_training, dont filter if load_for_predictions
+            if filter == True and not stats['has_results']:
+                continue
+        elif match['cs_target'] == '-':
             continue
 
         matches_data.append({**match, **stats})
@@ -97,23 +116,25 @@ def get(url, user_token, filter=True):
     return matches_data
 
 
-def add_features(all_matches):
+def add_features(all_matches, key='utc_date'):
     matches_data = []
     for match in all_matches:
 
         # Convert the string to a datetime object
-        utc_date = datetime.strptime(
-            match['utc_date'], "%Y-%m-%d %H:%M:%S")
-        date = pd.to_datetime(utc_date)
+        current_match_data = {}
+        if key in match:
+            utc_date = datetime.strptime(
+                match[key], "%Y-%m-%d %H:%M:%S")
+            date = pd.to_datetime(utc_date)
 
-        hour = utc_date.hour
-        day_of_week = utc_date.weekday()
+            hour = utc_date.hour
+            day_of_week = utc_date.weekday()
 
-        current_match_data = {
-            "date": date,
-            "hour": hour,
-            "day_of_week": day_of_week,
-        }
+            current_match_data = {
+                "date": date,
+                "hour": hour,
+                "day_of_week": day_of_week,
+            }
 
         matches_data.append({**match, **current_match_data})
 

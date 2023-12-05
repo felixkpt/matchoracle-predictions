@@ -2,7 +2,7 @@ import os
 import json
 import joblib
 import pandas as pd
-from sklearn.metrics import accuracy_score, precision_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, f1_score, recall_score
 from sklearn.metrics import confusion_matrix as c_matrix
 from app.train_predictions.hyperparameters.hyperparameters import save_hyperparameters
 from configs.settings import COMMON_FEATURES
@@ -74,6 +74,8 @@ def save_model(model, train_frame, test_frame, FEATURES, target, compe_data):
 
     joblib.dump(model, filename)
 
+    print('Model saved.')
+
 
 def get_model(target, compe_data):
     COMPETITION_ID = compe_data['id']
@@ -119,7 +121,7 @@ def confusion_matrix(test_frame, target, preds):
     print("\n")
 
 
-def feature_importance(model, compe_data, target, FEATURES, show=True, threshold=0.009):
+def feature_importance(model, compe_data, target, FEATURES, show=True, threshold=0.005):
     feature_importance = model.feature_importances_
 
     if show:
@@ -145,18 +147,18 @@ def feature_importance(model, compe_data, target, FEATURES, show=True, threshold
     # Save the sorted data back to the JSON file
     with open(filename, 'w') as file:
         json.dump(best_features, file, indent=4)
-    
+
     return best_features
 
 
-def get_features(compe_data, target, do_grid_search=False):
+def get_features(compe_data, target, is_grid_search=False):
     COMPETITION_ID = compe_data['id']
     PREDICTION_TYPE = compe_data['prediction_type']
 
     features = COMMON_FEATURES
     has_features = False
 
-    if not do_grid_search:
+    if not is_grid_search:
         try:
             # Load hyperparameters data
             filename = os.path.abspath(
@@ -191,3 +193,53 @@ def parse_json(json_data):
         return [parse_json(item) for item in json_data]
     else:
         return json_data
+
+
+def store_score_weights(compe_data, target, score_weights):
+    print(f'Best Score Weights:{score_weights}\n')
+
+    COMPETITION_ID = compe_data['id']
+    PREDICTION_TYPE = compe_data['prediction_type']
+
+    # Create the directory if it doesn't exist
+    directory = os.path.abspath(
+        f"app/train_predictions/tuning/score_weights/{PREDICTION_TYPE}/")
+    os.makedirs(directory, exist_ok=True)
+
+    filename = f'{directory}/{target}_scores_weights.json'
+    file_path = os.path.join(directory, filename)
+
+    # Read existing data from the JSON file
+    weights_dict = {}
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as json_file:
+            weights_dict = parse_json(json.load(json_file))
+
+    # Update or add the score weights for the target
+    weights_dict[COMPETITION_ID] = score_weights
+
+    # Sort the dictionary by keys
+    weights_dict = dict(
+        sorted(weights_dict.items(), key=lambda x: int(x[0])))
+
+    # Write to the JSON file
+    with open(file_path, 'w') as json_file:
+        json.dump(weights_dict, json_file, indent=2)
+
+
+def combined_score(y_true, y_pred, score_weights, natural_score):
+    natural_score = 0.25 * natural_score
+
+    weighted_accuracy = score_weights[0] * \
+        (0.75 * accuracy_score(y_true, y_pred) + natural_score)
+    weighted_precision = score_weights[1] * (0.75 * precision_score(
+        y_true, y_pred, average='weighted', zero_division=0) + natural_score)
+    weighted_f1 = score_weights[2] * (0.75 * f1_score(
+        y_true, y_pred, average='weighted', zero_division=0) + natural_score)
+    weighted_recall = score_weights[3] * (0.75 * recall_score(
+        y_true, y_pred, average='weighted', zero_division=0) + natural_score)
+
+    # Combine scores with provided weights
+    combined_score = (weighted_accuracy + weighted_precision +
+                      weighted_f1 + weighted_recall) / sum(score_weights)
+    return combined_score

@@ -38,7 +38,7 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
         max_depth.append(x)
 
     return {
-        'n_estimators': n_estimators,
+        'n_estimators': [150],
         'min_samples_split': min_samples_split,
         'class_weight': class_weight,
         'min_samples_leaf': min_samples_leaf,
@@ -47,7 +47,8 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
 
 
 def save_hyperparameters(compe_data, target, user_token):
-    print('Saving hyperparameters...')
+    print('Saving hyperparameters...\n')
+    print('-----------\n')
     id = compe_data['id']
     prediction_type = compe_data['prediction_type']
     best_params = compe_data['best_params']
@@ -66,7 +67,8 @@ def save_hyperparameters(compe_data, target, user_token):
 
     name = target[0]+'_multiple' if type(target) == list else target
 
-    filename = os.path.abspath(f"{directory}/{name}_hyperparams.json")
+    filename = os.path.abspath(
+        f"{directory}/{name}{'_normalizer' if 'is_normalizer' in compe_data and compe_data['is_normalizer'] else ''}_hyperparams.json")
 
     try:
         with open(filename, 'r') as file:
@@ -119,17 +121,52 @@ def save_hyperparameters(compe_data, target, user_token):
     update_backend(user_token, id, target, main_object)
 
 
-def get_hyperparameters(compe_data, target, outcomes=None):
+def get_hyperparameters(compe_data, target, is_normalizer=False):
 
     has_weights = False
-    n_estimators = 100
-    min_samples_split = 2
-    transformed_dict = {key: 1 for key in outcomes or [0, 1]}
-    class_weight = transformed_dict
-    bootstrap = False
-    criterion = 'gini'
-    min_samples_leaf = 1
+    hyper_params = {
+        'random_state': 1,
+        'criterion': 'gini',
+        'max_depth': None,
+        'n_estimators': 150,
+        'min_samples_split': 20,
+        'class_weight': 'balanced',
+        'min_samples_leaf': 4,
+        'max_leaf_nodes': None,
+        'max_features': None,
+        'bootstrap': False,
+    }
 
+    name = target[0]+'_multiple' if type(target) == list else target
+
+    try:
+        # Load hyperparameters data
+        filename = os.path.abspath(
+            f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/{name}{'_normalizer' if is_normalizer else ''}_hyperparams.json")
+
+        try:
+            with open(filename, 'r') as file:
+                hyperparameters_data = parse_json(json.load(file))
+        except:
+            FileNotFoundError
+
+        # Get the hyperparameters for compe id
+        best_params = hyperparameters_data.get(compe_data['id'], None)
+
+        has_weights = True
+        for key in best_params:
+            if key in hyper_params:
+                hyper_params[key] = best_params[key]
+
+    except:
+        KeyError
+
+    return [hyper_params, has_weights]
+
+
+def get_occurrences(compe_data, target):
+
+    occurrences = []
     name = target[0]+'_multiple' if type(target) == list else target
 
     try:
@@ -146,27 +183,12 @@ def get_hyperparameters(compe_data, target, outcomes=None):
         # Get the hyperparameters for compe id
         best_params = hyperparameters_data.get(compe_data['id'], None)
 
-        hyper_params = best_params
-        n_estimators = hyper_params['n_estimators']
-        criterion = hyper_params['criterion']
-        min_samples_split = hyper_params['min_samples_split']
-        min_samples_leaf = hyper_params['min_samples_leaf']
-        class_weight = hyper_params['class_weight']
-        bootstrap = hyper_params['bootstrap']
-        has_weights = True
+        occurrences = best_params['occurrences']
+
     except:
         KeyError
 
-    hyper_params = {
-        'n_estimators': n_estimators,
-        'criterion': criterion,
-        'min_samples_split': min_samples_split,
-        'min_samples_leaf': min_samples_leaf,
-        'class_weight': class_weight,
-        'bootstrap': bootstrap,
-    }
-
-    return [hyper_params, has_weights]
+    return occurrences
 
 
 def parse_json(json_data):
@@ -184,10 +206,17 @@ def parse_json(json_data):
 
 
 def best_parms_to_fractions(best_params, train_frame):
-    min_samples_split = best_params['min_samples_split'] / len(train_frame)
-    best_params['min_samples_split'] = round(min_samples_split, 3)
 
-    min_samples_leaf = best_params['min_samples_leaf'] / len(train_frame)
-    best_params['min_samples_leaf'] = round(min_samples_leaf, 3)
+    if 'min_samples_split' in best_params:
+        min_samples_split = best_params['min_samples_split'] / len(train_frame)
+        best_params['min_samples_split'] = round(min_samples_split, 3)
+
+    if 'min_samples_leaf' in best_params:
+        min_samples_leaf = best_params['min_samples_leaf'] / len(train_frame)
+        best_params['min_samples_leaf'] = round(min_samples_leaf, 3)
+
+    if 'n_estimators' in best_params:
+        n_estimators = best_params['n_estimators'] / len(train_frame)
+        best_params['n_estimators_fraction'] = round(n_estimators, 3)
 
     return best_params

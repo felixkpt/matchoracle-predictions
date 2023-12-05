@@ -12,7 +12,7 @@ HISTORY_LIMITS = [5]
 # Campeonato Brasileiro Série A, Championship, EPL, Portugal primera, LaLiga
 # 47, 48, 125, 148
 COMPETITION_IDS = [25, 47, 48, 125, 148]
-COMPETITION_IDS = [48]
+COMPETITION_IDS = [25]
 
 # Calculate from_date and to_date
 TRAIN_TO_DATE = datetime.strptime('2023-09-30', '%Y-%m-%d')
@@ -40,9 +40,13 @@ def train_chained(user_token):
 
             is_grid_search = False
             ignore_saved = False
+            is_random_search = False
+            target = 'all'
             for arg in sys.argv:
                 if arg.startswith('grid-search'):
                     is_grid_search = True
+                if arg.startswith('is-random-search'):
+                    is_random_search = True
                 if arg.startswith('ignore-saved'):
                     ignore_saved = True
 
@@ -68,11 +72,10 @@ def train_chained(user_token):
                 print('No matches to make predictions!')
                 return
 
-            is_random_search = False
             update_model = True
 
             bts_over25_chained(user_token, train_matches, test_matches, compe_data,
-                            is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                               is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
             # cs_predictions(user_token, train_matches, test_matches, compe_data,
             #                 is_grid_search, is_random_search=is_random_search, update_model=update_model)
