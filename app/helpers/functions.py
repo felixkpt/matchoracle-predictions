@@ -227,19 +227,54 @@ def store_score_weights(compe_data, target, score_weights):
         json.dump(weights_dict, json_file, indent=2)
 
 
+def get_score_weights(compe_data, target):
+    COMPETITION_ID = compe_data['id']
+    PREDICTION_TYPE = compe_data['prediction_type']
+
+    # Construct the file path
+    directory = os.path.abspath(
+        f"app/train_predictions/tuning/score_weights/{PREDICTION_TYPE}/")
+    filename = f'{directory}/{target}_scores_weights.json'
+    file_path = os.path.join(directory, filename)
+
+    # Read existing data from the JSON file
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as json_file:
+            weights_dict = json.load(json_file)
+
+            # Retrieve score weights for the given competition ID
+            score_weights = weights_dict.get(str(COMPETITION_ID))
+
+            return score_weights
+
+    return None  # Return None if no score weights are found
+
+
 def combined_score(y_true, y_pred, score_weights, natural_score):
     natural_score = 0.25 * natural_score
 
-    weighted_accuracy = score_weights[0] * \
-        (0.75 * accuracy_score(y_true, y_pred) + natural_score)
-    weighted_precision = score_weights[1] * (0.75 * precision_score(
-        y_true, y_pred, average='weighted', zero_division=0) + natural_score)
-    weighted_f1 = score_weights[2] * (0.75 * f1_score(
-        y_true, y_pred, average='weighted', zero_division=0) + natural_score)
-    weighted_recall = score_weights[3] * (0.75 * recall_score(
-        y_true, y_pred, average='weighted', zero_division=0) + natural_score)
+    weighted_accuracy = 0
+    if score_weights['accuracy'] > 0:
+        weighted_accuracy = score_weights['accuracy'] * \
+            (0.75 * accuracy_score(y_true, y_pred) + natural_score)
+
+    weighted_precision = 0
+    if score_weights['precision'] > 0:
+        weighted_precision = score_weights['precision'] * (0.75 * precision_score(
+            y_true, y_pred, average='weighted', zero_division=0) + natural_score)
+
+    weighted_f1 = 0
+    if score_weights['f1'] > 0:
+        weighted_f1 = score_weights['f1'] * (0.75 * f1_score(
+            y_true, y_pred, average='weighted', zero_division=0) + natural_score)
+
+    weighted_recall = 0
+    if score_weights['recall'] > 0:
+        weighted_recall = score_weights['recall'] * (0.75 * recall_score(
+            y_true, y_pred, average='weighted', zero_division=0) + natural_score)
 
     # Combine scores with provided weights
     combined_score = (weighted_accuracy + weighted_precision +
-                      weighted_f1 + weighted_recall) / sum(score_weights)
+                      weighted_f1 + weighted_recall) / sum(score_weights.values())
+
     return combined_score

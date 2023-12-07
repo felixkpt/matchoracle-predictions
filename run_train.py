@@ -28,6 +28,7 @@ def run_train(user_token, target, hyperparameters, PREDICTION_TYPE, COMPETITION_
     is_grid_search = False
     ignore_saved = False
     is_random_search = False
+    run_score_weights = False
     target = target or 'all'
     for arg in sys.argv:
         if arg.startswith('is-grid-search'):
@@ -40,6 +41,8 @@ def run_train(user_token, target, hyperparameters, PREDICTION_TYPE, COMPETITION_
             parts = arg.split('=')
             if len(parts) == 2:
                 target = parts[1]
+        if arg.startswith('run-score-weights'):
+            run_score_weights = True
 
     Logger.info(f'Target: {target}\n')
 
@@ -70,16 +73,16 @@ def run_train(user_token, target, hyperparameters, PREDICTION_TYPE, COMPETITION_
 
     if target == 'all' or target == 'hda':
         hda_predictions(user_token, train_matches, test_matches, compe_data,
-                        is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters)
+                        is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters, run_score_weights=run_score_weights)
 
     if target == 'all' or target == 'bts':
         bts_predictions(user_token, train_matches, test_matches, compe_data,
-                        is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters)
+                        is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters, run_score_weights=run_score_weights)
 
     if target == 'all' or target == 'over' or target == 'over25':
         over_predictions(user_token, train_matches, test_matches, compe_data,
-                         is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters)
+                         is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters, run_score_weights=run_score_weights)
 
     if target == 'all' or target == 'cs':
         cs_predictions(user_token, train_matches, test_matches, compe_data,
-                       is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters)
+                       is_grid_search, is_random_search=is_random_search, update_model=update_model, hyperparameters=hyperparameters, run_score_weights=run_score_weights)

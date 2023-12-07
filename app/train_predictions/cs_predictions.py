@@ -13,7 +13,7 @@ import numpy as np
 np.random.seed(42)
 
 
-def cs_predictions(user_token, train_matches, test_matches, compe_data, is_grid_search=False, is_random_search=False, update_model=False, hyperparameters={}):
+def cs_predictions(user_token, train_matches, test_matches, compe_data, is_grid_search=False, is_random_search=False, update_model=False, hyperparameters={}, run_score_weights=False):
 
     target = 'cs_target'
 
@@ -42,7 +42,7 @@ def cs_predictions(user_token, train_matches, test_matches, compe_data, is_grid_
     if is_grid_search or not has_weights:
         is_grid_search = True
         best_params = prepare_grid_search(grid_search, compe_data,
-                                          model, train_frame, FEATURES, target, occurrences, is_random_search)
+                                          model, train_frame, FEATURES, target, occurrences, is_random_search, run_score_weights)
 
         hyper_params = best_params
         n_estimators_fraction = hyper_params['n_estimators_fraction']

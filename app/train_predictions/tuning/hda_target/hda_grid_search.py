@@ -58,7 +58,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     }
 
     # Fitting grid search to the train data
-    n_splits = 3
+    n_splits = 5
     if not is_random_search:
         gridsearch = GridSearchCV(
             estimator=model,

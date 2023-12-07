@@ -8,7 +8,7 @@ from app.train_predictions.hyperparameters.hyperparameters import get_hyperparam
 from app.train_predictions.fit_over_preds import fit_over_preds
 
 
-def over_predictions(user_token, train_matches, test_matches, compe_data, is_grid_search=False, is_random_search=False, update_model=False, hyperparameters={}):
+def over_predictions(user_token, train_matches, test_matches, compe_data, is_grid_search=False, is_random_search=False, update_model=False, hyperparameters={}, run_score_weights=False):
 
     target = 'over25_target'
 
@@ -37,7 +37,7 @@ def over_predictions(user_token, train_matches, test_matches, compe_data, is_gri
     if is_grid_search or not has_weights:
         is_grid_search = True
         best_params = prepare_grid_search(grid_search, compe_data,
-                                          model, train_frame, FEATURES, target, occurrences, is_random_search)
+                                          model, train_frame, FEATURES, target, occurrences, is_random_search, run_score_weights)
 
         hyper_params = best_params
         n_estimators_fraction = hyper_params['n_estimators_fraction']

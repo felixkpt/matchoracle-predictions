@@ -81,15 +81,16 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'bootstrap': [True],
     }
 
+    n_splits=5
     # Fitting grid search to the train data
     if not is_random_search:
         gridsearch = GridSearchCV(
             estimator=model,
             param_grid=param_grid,
-            cv=StratifiedKFold(n_splits=5),
+            cv=StratifiedKFold(n_splits),
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences, score_weights),
-            verbose=2,
+            verbose=3,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
@@ -97,7 +98,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             estimator=model,
             param_distributions=param_grid,
             n_iter=10,
-            cv=5,
+            cv=n_splits,
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences, score_weights),
             random_state=42,
