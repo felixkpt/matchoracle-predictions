@@ -6,6 +6,7 @@
     "away_team_id",
     "home_team_wins",
     "home_team_draws",
+    "home_team_loses",
     "home_team_goals_for",
     "home_team_goals_for_avg",
     "home_team_goals_against",

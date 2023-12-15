@@ -10,9 +10,6 @@ def predictions_normalizer(prediction, compe_data):
 
     dictionary_list = scores(occurences, min_threshold=0.2)
 
-    if prediction['id'] == 7067:
-        print('7067-->', prediction)
-
     hda = int(prediction['hda'])
     home_win_proba = prediction['home_win_proba']
     draw_proba = prediction['draw_proba']
@@ -72,8 +69,6 @@ def predictions_normalizer(prediction, compe_data):
     for i, score in enumerate(dictionary_list):
         for j, key in enumerate(['hda', 'home_margin', 'draw_margin', 'away_margin', 'bts', 'bts_margin', 'over15', 'over25', 'over35']):
             votes[i] += 1 if prediction_values[j] == score[key] else 0
-
-    print(prediction, votes)
 
     max_votes = max(votes)
     best_match_indices = [

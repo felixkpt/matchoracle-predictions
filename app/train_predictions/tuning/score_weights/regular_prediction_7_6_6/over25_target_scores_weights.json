@@ -1,32 +1,32 @@
 {
   "25": {
     "accuracy": 0,
-    "precision": 1.0,
+    "precision": 0,
     "f1": 0,
-    "recall": 0.0
+    "recall": 1
   },
   "47": {
     "accuracy": 0,
-    "precision": 1.0,
+    "precision": 0,
     "f1": 0,
-    "recall": 0.0
+    "recall": 1
   },
   "48": {
     "accuracy": 0,
-    "precision": 0.0,
+    "precision": 0,
     "f1": 0,
-    "recall": 1.0
+    "recall": 1
   },
   "125": {
     "accuracy": 0,
-    "precision": 1.0,
+    "precision": 0,
     "f1": 0,
-    "recall": 0.0
+    "recall": 1
   },
   "148": {
     "accuracy": 0,
-    "precision": 0.0,
+    "precision": 0,
     "f1": 0,
-    "recall": 1.0
+    "recall": 1
   }
 }

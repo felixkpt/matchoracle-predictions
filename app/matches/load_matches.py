@@ -40,7 +40,7 @@ def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ra
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=past&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)
@@ -66,14 +66,11 @@ def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ra
 
 def load_for_predictions(COMPETITION_ID, user_token, be_params):
 
-    target_date, history_limit_per_match = be_params
     target_date = be_params['target_date']
-    history_limit_per_match = be_params['history_limit_per_match']
-    current_ground_limit_per_match = be_params['current_ground_limit_per_match']
-    h2h_limit_per_match = be_params['h2h_limit_per_match']
+    prediction_type = be_params['prediction_type']
 
     # Now that you have the user token, you can use it for other API requests.
-    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={target_date}&with_stats=1&order_by=utc_date&order_direction=desc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
+    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={target_date}&with_stats=1&order_by=utc_date&order_direction=desc&prediction_type={prediction_type}"
 
     matches_data = get(url=url, user_token=user_token, filter=False)
 

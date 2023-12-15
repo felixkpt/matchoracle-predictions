@@ -43,17 +43,17 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'random_state': [1],
         'criterion': ['gini'],
         'max_depth': [None],
-        'n_estimators': n_estimators,
+        'n_estimators': [200],
         'min_samples_split': min_samples_split,
         'class_weight': ['balanced'],
-        'min_samples_leaf': min_samples_leaf,
+        'min_samples_leaf': [30, 40],
         'max_leaf_nodes': [None],
-        'max_features': [None],
+        'max_features': ['sqrt'],
         'bootstrap': [True],
     }
 
     # Fitting grid search to the train data
-    n_splits = 5
+    n_splits = 3
     if not is_random_search:
         gridsearch = GridSearchCV(
             estimator=model,

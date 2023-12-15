@@ -3,15 +3,15 @@ import json
 
 
 class ModelMetrics:
-    def __init__(self, target, prediction_types):
+    def __init__(self, target, prediction_types, competitions=[25, 47, 47]):
         self.target = target
         self.base_path = f"/home/felix/Documents/DEV/PY/matchoracle-predictions-v2/app/train_predictions/hyperparameters/"
         self.prediction_types = prediction_types
+        self.competitions = competitions
         self.metrics = self.load_metrics()
 
     def load_metrics(self):
 
-        exclude_ids = [125, 148]
         metrics = {}
         for prediction_type in self.prediction_types:
             json_path = os.path.join(
@@ -19,7 +19,7 @@ class ModelMetrics:
             with open(json_path, 'r') as file:
                 json_content = json.load(file)
                 filtered = {comp_id: comp_data for comp_id, comp_data in json_content.items(
-                ) if int(comp_id) not in exclude_ids}
+                ) if int(comp_id) in self.competitions}
                 metrics[prediction_type] = filtered
         return metrics
 

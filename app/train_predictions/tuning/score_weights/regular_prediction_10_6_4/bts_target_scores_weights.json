@@ -1,8 +1,20 @@
 {
   "25": {
     "accuracy": 0,
-    "precision": 0.0,
+    "precision": 0,
     "f1": 0,
-    "recall": 1.0
+    "recall": 1
+  },
+  "47": {
+    "accuracy": 0,
+    "precision": 0,
+    "f1": 0,
+    "recall": 1
+  },
+  "48": {
+    "accuracy": 0,
+    "precision": 0,
+    "f1": 0,
+    "recall": 1
   }
 }

@@ -1,3 +1,4 @@
+import argparse
 from configs.settings import API_BASE_URL
 from app.predictions.hda_predictions import hda_predictions
 from app.predictions.bts_predictions import bts_predictions
@@ -7,28 +8,30 @@ from app.predictions.predictions_normalizer import predictions_normalizer as nor
 from app.matches.load_matches import load_for_predictions
 from configs.logger import Logger
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 import json
 import requests
-from configs.settings import HISTORY_LIMITS
 
 # Define constants
-history_limit_per_match = HISTORY_LIMITS[0]
 # Campeonato Brasileiro Série A, Championship, EPL, Portugal primera, LaLiga
 # 47, 48, 125, 148
 COMPETITION_IDS = [25, 47, 48, 125, 148]
 # COMPETITION_IDS = [48]
 
+
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
-    PREDICTION_TYPE = "regular_prediction"
+    parser = argparse.ArgumentParser(description='Run predictions for a specified competition.')
+    parser.add_argument('--competition', type=int, help='Competition ID for predictions')
 
-    for COMPETITION_ID in COMPETITION_IDS:
-        # Calculate from_date and to_date
-        target_date_init = datetime.strptime('2023-09-01', '%Y-%m-%d')
-        # target_date_init = datetime.strptime('2023-09-24', '%Y-%m-%d')
-        # target_date_init = datetime.strptime('2023-12-02', '%Y-%m-%d')
+    args, extra_args = parser.parse_known_args()
+
+    # If competition_id is provided, use it; otherwise, use the default COMPETITION_IDS
+    competition_ids = [args.competition] if args.competition is not None else COMPETITION_IDS
+
+    PREDICTION_TYPE = "regular_prediction_10_6_6"
+
+    for COMPETITION_ID in competition_ids:
         compe_data = {}
         compe_data['id'] = COMPETITION_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
@@ -36,17 +39,22 @@ def predict(user_token):
         Logger.info(f"Competition: {COMPETITION_ID}")
         Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
 
-        for i in range(0, 120):
+        plus_x_days = 16
+        # Calculate today plus plus_x_days days
+        today_plus_x_days = datetime.now() + timedelta(days=plus_x_days)
+        # Convert today_plus_x_days to a string once
+        today_plus_x_days_str = today_plus_x_days.strftime("%Y-%m-%d")
+        # Calculate from_date and to_date
+        from_date = datetime.strptime('2023-07-01', '%Y-%m-%d')
+        to_date = datetime.now() + timedelta(days=plus_x_days)
 
-            target_date = target_date_init - relativedelta(days=-1 * i)
-            target_date = target_date.strftime("%Y-%m-%d")
-
-            plus_x_days = 16
-            # Calculate today plus plus_x_days days
-            today_plus_x_days = datetime.now() + timedelta(days=plus_x_days)
+        # Iterate through a range of dates between from_date and to_date
+        for i in range((to_date - from_date).days + 1):
+            target_date = (from_date + timedelta(days=i))
+            target_date_str = target_date.strftime("%Y-%m-%d")
 
             # Check if the target date is past today plus plus_x_days days
-            if target_date > today_plus_x_days.strftime("%Y-%m-%d"):
+            if target_date_str > today_plus_x_days_str:
                 Logger.info(
                     f"Aborting predictions for Competition {COMPETITION_ID} as target date {target_date} is past today plus {plus_x_days} days.")
                 break
@@ -54,8 +62,13 @@ def predict(user_token):
             Logger.info(f"Competition: {COMPETITION_ID}")
             Logger.info(f"Date: {target_date}\n")
 
-            be_params = target_date, history_limit_per_match
-            matches = load_for_predictions(COMPETITION_ID, user_token, be_params)
+            be_params = {
+                'target_date': target_date_str,
+                'prediction_type': PREDICTION_TYPE
+            }
+
+            matches = load_for_predictions(
+                COMPETITION_ID, user_token, be_params)
 
             total_matches = len(matches)
 
