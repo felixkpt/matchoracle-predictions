@@ -8,11 +8,10 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+def load_for_training(compe_data, user_token, be_params, per_page=1500, train_ratio=.70, ignore_saved=False):
     COMPETITION_ID = compe_data['id']
     PREDICTION_TYPE = compe_data['prediction_type']
 
-    from_date_str = be_params['from_date'].strftime("%Y-%m-%d")
     to_date_str = be_params['to_date'].strftime("%Y-%m-%d")
     history_limit_per_match = be_params['history_limit_per_match']
     current_ground_limit_per_match = be_params['current_ground_limit_per_match']
@@ -40,11 +39,11 @@ def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ra
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=past&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=past&per_page={per_page}&to_date={to_date_str}&is_predictor=1&task=train&order_by=utc_date&order_direction=desc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)
-
+        
         # Save the fetched data to 'all_matches.json'
         with open(filename, 'w') as file:
             json.dump(all_matches, file)
@@ -54,6 +53,8 @@ def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ra
 
     all_matches = add_features(all_matches, key='utc_date')
     total_matches = len(all_matches)
+    
+    if total_matches < 50: return [], []
 
     train_size = int(total_matches * train_ratio)
 
@@ -70,7 +71,7 @@ def load_for_predictions(COMPETITION_ID, user_token, be_params):
     prediction_type = be_params['prediction_type']
 
     # Now that you have the user token, you can use it for other API requests.
-    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={target_date}&with_stats=1&order_by=utc_date&order_direction=desc&prediction_type={prediction_type}"
+    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={target_date}&is_predictor=1&task=predict&order_by=utc_date&order_direction=desc&prediction_type={prediction_type}"
 
     matches_data = get(url=url, user_token=user_token, filter=False)
 
@@ -91,13 +92,18 @@ def get(url, user_token, filter=True):
     response.raise_for_status()  # Raise an error if the request was not successful
 
     # Parse the JSON response
-    all_matches = response.json()['results']['data']
+    all_matches = response.json()
 
     matches_data = []
     for match in all_matches:
         stats = {}
         if 'stats' in match:
             stats = match['stats']
+            del match['stats']
+            del match['competition']
+            del match['home_team']
+            del match['away_team']
+            del match['score']
 
             if stats == None:
                 continue

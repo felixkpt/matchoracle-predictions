@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, best_parms_to_fractions
+from configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VARBOSE
 import numpy as np
 from itertools import product
 
@@ -81,7 +82,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'bootstrap': [True],
     }
 
-    n_splits=5
+    n_splits=3
     # Fitting grid search to the train data
     if not is_random_search:
         gridsearch = GridSearchCV(
@@ -90,7 +91,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             cv=StratifiedKFold(n_splits),
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences, score_weights),
-            verbose=3,
+            verbose=GRID_SEARCH_VARBOSE,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
@@ -102,7 +103,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences, score_weights),
             random_state=42,
-            verbose=3,
+            verbose=GRID_SEARCH_VARBOSE,
         ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score

@@ -28,7 +28,7 @@ def cs_predictions(matches, compe_data):
     predict_proba = normalizer(predict_proba)
 
     print_preds_update_hyperparams(None, target, compe_data, preds, predict_proba,
-                                   train_frame=None, test_frame=predict_frame, print_minimal=False)
+                                   train_frame=None, test_frame=predict_frame)
 
     return [preds, predict_proba]
 

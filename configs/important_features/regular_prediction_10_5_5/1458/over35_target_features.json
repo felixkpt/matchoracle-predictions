@@ -1,0 +1,7 @@
+[
+    "home_team_id",
+    "home_team_goals_against_avg",
+    "away_team_goals_for",
+    "away_team_goals_against",
+    "away_team_goals_against_avg"
+]

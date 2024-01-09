@@ -62,7 +62,7 @@ def cs_predictions(user_token, train_matches, test_matches, compe_data, is_grid_
     predict_proba = model.predict_proba(test_frame[FEATURES])
 
     FEATURES = feature_importance(
-        model, compe_data, target, FEATURES, False, 0.003)
+        model, compe_data, target, FEATURES, False, 0.003) or FEATURES
 
     # Save model if update_model is set
     if update_model:
@@ -83,6 +83,6 @@ def cs_predictions(user_token, train_matches, test_matches, compe_data, is_grid_
     compe_data['to_date'] = test_matches[-1]['utc_date']
 
     print_preds_update_hyperparams(user_token, target, compe_data,
-                                   preds, predict_proba, train_frame, test_frame, print_minimal=False)
+                                   preds, predict_proba, train_frame, test_frame)
 
     return [preds, predict_proba, occurrences]

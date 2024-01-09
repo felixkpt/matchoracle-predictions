@@ -25,7 +25,7 @@ def natural_occurrences(possible_outcomes, train_frame, test_frame, target, prin
         percentage = round(0 if percentage < 0.01 else percentage, 2)
 
         occurrences[outcome] = percentage
-        if print_output:
+        if print_output and percentage > 0:
             print(f"Natural Percentage of {outcome}: {percentage}%")
 
     return occurrences

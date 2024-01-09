@@ -10,26 +10,29 @@ from configs.logger import Logger
 from datetime import datetime, timedelta
 import json
 import requests
-
-# Define constants
-# Campeonato Brasileiro Série A, Championship, EPL, Portugal primera, LaLiga
-# 47, 48, 125, 148
-COMPETITION_IDS = [25, 47, 48, 125, 148]
-# COMPETITION_IDS = [48]
+from configs.active_competitions.competition_data import get_trained_competitions, update_trained_competitions
 
 
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
-    parser = argparse.ArgumentParser(description='Run predictions for a specified competition.')
-    parser.add_argument('--competition', type=int, help='Competition ID for predictions')
+    PREDICTION_TYPE = "regular_prediction_10_5_5"
+
+    logger_model(user_token, PREDICTION_TYPE)
+
+    parser = argparse.ArgumentParser(
+        description='Run predictions for a specified competition.')
+    parser.add_argument('--competition', type=int,
+                        help='Competition ID for predictions')
+
+    parser.add_argument('--ignore-timing', type=int,
+                        help='Ignore last predicted check')
 
     args, extra_args = parser.parse_known_args()
 
-    # If competition_id is provided, use it; otherwise, use the default COMPETITION_IDS
-    competition_ids = [args.competition] if args.competition is not None else COMPETITION_IDS
-
-    PREDICTION_TYPE = "regular_prediction_10_6_6"
+    # If competition_id is provided, use it; otherwise, fetch from the backend API
+    competition_ids = [
+        args.competition] if args.competition is not None else get_trained_competitions(False, args.ignore_timing or False)
 
     for COMPETITION_ID in competition_ids:
         compe_data = {}
@@ -38,6 +41,7 @@ def predict(user_token):
 
         Logger.info(f"Competition: {COMPETITION_ID}")
         Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
+        do_competition_run_logging(user_token, PREDICTION_TYPE)
 
         plus_x_days = 16
         # Calculate today plus plus_x_days days
@@ -45,8 +49,11 @@ def predict(user_token):
         # Convert today_plus_x_days to a string once
         today_plus_x_days_str = today_plus_x_days.strftime("%Y-%m-%d")
         # Calculate from_date and to_date
-        from_date = datetime.strptime('2023-07-01', '%Y-%m-%d')
+        from_date = datetime.strptime('2023-01-01', '%Y-%m-%d')
         to_date = datetime.now() + timedelta(days=plus_x_days)
+
+        data = {'results': {}}
+        totals = 0
 
         # Iterate through a range of dates between from_date and to_date
         for i in range((to_date - from_date).days + 1):
@@ -71,29 +78,37 @@ def predict(user_token):
                 COMPETITION_ID, user_token, be_params)
 
             total_matches = len(matches)
-
+            totals = totals + total_matches
+            
             if total_matches == 0:
                 print('No matches to make predictions!')
             else:
                 print(f'Predicting {total_matches} matches...')
 
                 hda_preds = hda_predictions(matches, compe_data)
-
                 bts_preds = bts_predictions(matches, compe_data)
-
                 over15_preds = over_predictions(
                     matches, compe_data, 'over15_target')
                 over25_preds = over_predictions(
                     matches, compe_data, 'over25_target')
                 over35_preds = over_predictions(
                     matches, compe_data, 'over35_target')
-
                 cs_preds = cs_predictions(matches, compe_data)
 
                 merge_and_store_predictions(user_token, compe_data, target_date, matches, hda_preds,
                                             bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
-                # break
+
+
             print(f"______________\n")
+
+
+        update_trained_competitions(user_token, compe_data)
+
+        data['results']['saved_updated'] = totals
+        do_logging(user_token, PREDICTION_TYPE, data=data)
+
+        print(f"\n----- END COMPE PREDS -----")
+
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
@@ -188,3 +203,65 @@ def storePredictions(data, user_token):
     message = response.json()['message']
 
     return message
+
+
+def do_competition_run_logging(user_token, PREDICTION_TYPE):
+    url = f"{API_BASE_URL}/admin/predictions/from-python-app/predictions-job-logs"
+
+    # Create a dictionary with the headers
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    # Assuming is_competition_run_logging is a boolean variable
+    is_competition_run_logging = True
+
+    json_data = json.dumps({
+        "prediction_type": PREDICTION_TYPE,
+        "is_competition_run_logging": is_competition_run_logging,
+    })
+
+    # Make a GET request with the headers
+    response = requests.post(url, data=json_data, headers=headers)
+    response.raise_for_status()
+
+
+def do_logging(user_token, PREDICTION_TYPE, data=None):
+    
+    url = f"{API_BASE_URL}/admin/predictions/from-python-app/predictions-job-logs"
+
+    # Create a dictionary with the headers
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    print(data['results'])
+    json_data = json.dumps({
+        "prediction_type": PREDICTION_TYPE,
+        "results": data['results']
+    })
+
+    # Make a GET request with the headers
+    response = requests.post(url, data=json_data, headers=headers)
+    response.raise_for_status()
+
+
+def logger_model(user_token, PREDICTION_TYPE=None):
+    url = f"{API_BASE_URL}/admin/predictions/from-python-app/predictions-job-logs"
+
+    # Create a dictionary with the headers
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    json_data = json.dumps({
+        "prediction_type": PREDICTION_TYPE,
+        "increment_job_run_counts": True,
+    })
+
+    # Make a GET request with the headers
+    response = requests.post(url, data=json_data, headers=headers)
+    response.raise_for_status()

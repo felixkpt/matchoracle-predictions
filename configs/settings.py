@@ -186,29 +186,16 @@ COMMON_FEATURES = [
     'team_lp_away_team_goals_against',
     'team_lp_away_team_goal_difference',
 
+    'home_win_odds',
+    'draw_odds',
+    'away_win_odds',
+    'over_25_odds',
+    'under_25_odds',
+    'gg_odds',
+    'ng_odds',
+
 ]
 
-NORMALIZER_COMMON_FEATURES = [
-    'competition_id',
-    'hour',
-    'day_of_week',
-    'game_id',
-    'hda',
-    'home_win_proba',
-    'draw_proba',
-    'away_win_proba',
-    'bts',
-    'gg_proba',
-    'ng_proba',
-    'over15',
-    'over15_proba',
-    'under15_proba',
-    'over25',
-    'over25_proba',
-    'under25_proba',
-    'over35',
-    'over35_proba',
-    'under35_proba',
-    'cs',
-    'cs_proba',
-]
+GRID_SEARCH_N_SPLITS = 3
+GRID_SEARCH_VARBOSE = 0
+TRAIN_VARBOSE = 0

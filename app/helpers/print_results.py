@@ -1,6 +1,6 @@
 from app.helpers.functions import preds_score, confusion_matrix
 from collections import Counter
-
+from configs.settings import TRAIN_VARBOSE
 
 def header(compe_data, preds):
 
@@ -15,8 +15,9 @@ def header(compe_data, preds):
     return total_preds, class_counts
 
 
-def print_preds_update_hyperparams(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_preds_update_hyperparams(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None):
 
+    print_minimal = TRAIN_VARBOSE < 2
     if target == 'hda_target':
         print_hda_predictions(user_token, target, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)

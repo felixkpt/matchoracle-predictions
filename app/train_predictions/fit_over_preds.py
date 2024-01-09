@@ -13,7 +13,7 @@ def fit_over_preds(user_token, model, compe_data,  target, train_frame, test_fra
     predict_proba = model.predict_proba(test_frame[FEATURES])
 
     FEATURES = feature_importance(
-        model, compe_data, target, FEATURES, False, 0.003)
+        model, compe_data, target, FEATURES, False, 0.003) or FEATURES
 
     # Save model if update_model is set
     if update_model:
@@ -31,4 +31,4 @@ def fit_over_preds(user_token, model, compe_data,  target, train_frame, test_fra
     compe_data['to_date'] = test_matches[-1]['utc_date']
 
     print_preds_update_hyperparams(user_token, target, compe_data,
-                                   preds, predict_proba, train_frame, test_frame, print_minimal=False)
+                                   preds, predict_proba, train_frame, test_frame)

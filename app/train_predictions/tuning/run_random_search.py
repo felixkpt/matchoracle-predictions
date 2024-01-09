@@ -60,7 +60,7 @@ def grid_search(model, train_frame, FEATURES, targets, occurrences, is_random_se
     model = ClassifierChain(base_classifier)
 
     # Fitting grid search to the train data
-    n_splits = 2
+    n_splits = GRID_SEARCH_N_SPLITS
     if not is_random_search:
         # Create the RandomizedSearchCV object
         gridsearch = GridSearchCV(
@@ -81,7 +81,7 @@ def grid_search(model, train_frame, FEATURES, targets, occurrences, is_random_se
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true),
             random_state=42,
-            verbose=3,
+            verbose=GRID_SEARCH_VARBOSE,
         ).fit(train_frame[FEATURES], train_frame[target])
 
     best_params = gridsearch.best_params_
