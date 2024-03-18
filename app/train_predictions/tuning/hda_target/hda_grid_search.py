@@ -37,7 +37,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'class_weight': 'balanced',
+        'class_weight': ['balanced'],
         'min_samples_leaf': [4, 7],
         'max_features': [None]
     }

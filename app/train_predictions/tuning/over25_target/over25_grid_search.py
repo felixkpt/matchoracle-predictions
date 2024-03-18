@@ -37,7 +37,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
         'min_samples_leaf': [3, 5],
-        'class_weight': 'balanced',
+        'class_weight': ['balanced'],
     }
 
     # Fitting grid search to the train data
