@@ -38,6 +38,9 @@ def train(user_token, extra_args):
 
         for COMPETITION_ID in competition_ids:
             if not trained_competition_ids or COMPETITION_ID not in trained_competition_ids:
+                compe_data = {'id': COMPETITION_ID,
+                              'prediction_type': PREDICTION_TYPE}
+
                 Logger.info(f"Competition: {COMPETITION_ID}")
                 Logger.info(f"Updating training to date: {train_to_date}\n")
                 Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
@@ -46,12 +49,9 @@ def train(user_token, extra_args):
                 ignore_saved = any(arg.startswith('ignore-saved')
                                    for arg in extra_args)
 
-                compe_data = {'id': COMPETITION_ID,
-                              'prediction_type': PREDICTION_TYPE}
-
                 # Load train and test data for all targets
                 train_matches, test_matches = load_for_training(
-                    compe_data, user_token, be_params, per_page=20, train_ratio=.75, ignore_saved=ignore_saved)
+                    COMPETITION_ID, user_token, be_params, per_page=20, train_ratio=.75, ignore_saved=ignore_saved)
 
                 total_matches = len(train_matches) + len(test_matches)
 
@@ -76,15 +76,15 @@ def train(user_token, extra_args):
                 update_model = True
 
                 hda_predictions(user_token, train_matches, test_matches, compe_data,
-                                PREDICTION_TYPE, is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                                is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
                 bts_predictions(user_token, train_matches, test_matches, compe_data,
-                                PREDICTION_TYPE, is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                                is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
                 over25_predictions(user_token, train_matches, test_matches, compe_data,
-                                   PREDICTION_TYPE, is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                                   is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
                 cs_predictions(user_token, train_matches, test_matches, compe_data,
-                               PREDICTION_TYPE, is_grid_search, is_random_search=is_random_search, update_model=update_model)
+                               is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")
