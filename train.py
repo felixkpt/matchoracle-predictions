@@ -46,12 +46,12 @@ def train(user_token, extra_args):
                 Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
 
                 be_params = from_date, to_date, history_limit_per_match
-                ignore_saved = any(arg.startswith('ignore-saved')
+                ignore_saved = any(arg.startswith('--ignore-saved')
                                    for arg in extra_args)
 
                 # Load train and test data for all targets
                 train_matches, test_matches = load_for_training(
-                    COMPETITION_ID, user_token, be_params, per_page=20, train_ratio=.75, ignore_saved=ignore_saved)
+                    COMPETITION_ID, user_token, be_params, per_page=200, train_ratio=.75, ignore_saved=ignore_saved)
 
                 total_matches = len(train_matches) + len(test_matches)
 
