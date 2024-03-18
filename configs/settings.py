@@ -1,7 +1,11 @@
+import os
+
 EMAIL = "admin@example.com"
 PASSWORD = "admin@example.com"
 
-API_BASE_URL = "http://matchoracle-be2.local/api"
+API_BASE_URL = "http://matchoracle-be.local/api"
+
+HISTORY_LIMITS = [7, 10, 12, 15]
 
 # Define predictors used for training
 COMMON_FEATURES = [
@@ -170,3 +174,14 @@ COMMON_FEATURES = [
     'h2h_ht_away_team_over25_games',
     'h2h_ht_away_team_over35_games',
 ]
+
+GRID_SEARCH_N_SPLITS = 3
+GRID_SEARCH_VARBOSE = 0
+TRAIN_VARBOSE = 0
+
+
+def basepath():
+    # Get the part before "configs"
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_before_configs, configs_directory = os.path.split(current_directory)
+    return path_before_configs

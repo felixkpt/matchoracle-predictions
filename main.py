@@ -1,46 +1,41 @@
+import sys
+import argparse
 from train import train
 from predict import predict
+from metrics import metrics
 from app.auth.get_user_token import get_user_token
 from configs.settings import EMAIL, PASSWORD
 from configs.logger import Logger
-from app.model_metrics import ModelMetrics
-import os
-
 
 def main():
-
     # Get the user token
     user_token = get_user_token(EMAIL, PASSWORD)
 
-    if user_token:
-        Logger.info("User token obtained successfully.")
+    if not user_token:
+        Logger.error("Failed to obtain user token. Exiting.")
+        return
 
-        print('______ PREDICTIONS APP START ______\n')
+    Logger.info("User token obtained successfully.")
+    print('______ PREDICTIONS APP START ______\n')
 
-        train(user_token)
+    parser = argparse.ArgumentParser(description='Predictions App')
+    parser.add_argument('task', choices=['train', 'predict', 'metrics'], help='Task to perform')
+   
+    args, extra_args = parser.parse_known_args()
 
-        # predict(user_token)
+    if args.task == 'train':
+        print('Task: Train\n')
+        train(user_token, extra_args)
 
-        target = 'hda_target'
-        target = 'bts_target'
-        # target = 'over25_target'
-        # target = 'cs_target'
+    elif args.task == 'predict':
+        print('Task: Predict\n')
+        predict(user_token)
 
-        prediction_types = [
-            'regular_prediction_last_5_matches_optimized',
-            'regular_prediction_last_7_matches_optimized',
-            'regular_prediction_last_10_matches_optimized',
-            'regular_prediction_last_15_matches_optimized',
-            'regular_prediction_last_20_matches_optimized',
-            'regular_prediction_last_25_matches_optimized',
-        ]
+    elif args.task == 'metrics':
+        print('Task: ModelMetrics\n')
+        metrics(user_token)
 
-        model_metrics = ModelMetrics(target, prediction_types)
-        comparison_results = model_metrics.compare_models()
-        model_metrics.choose_best_model(comparison_results)
-
-        print('\n______ PREDICTIONS APP END ______')
-
+    print('\n______ PREDICTIONS APP END ______')
 
 if __name__ == "__main__":
     main()

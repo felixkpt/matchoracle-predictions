@@ -33,7 +33,7 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&with_stats=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&from_date={from_date_str}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)
@@ -60,7 +60,7 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
 def load_for_predictions(COMPETITION_ID, TARGET_DATE, user_token):
 
     # Now that you have the user token, you can use it for other API requests.
-    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={TARGET_DATE}&with_stats=1"
+    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={TARGET_DATE}&is_predictor=1"
 
     matches_data = get(url=url, user_token=user_token, filter=False)
 
@@ -81,7 +81,7 @@ def get(url, user_token, filter=True):
     response.raise_for_status()  # Raise an error if the request was not successful
 
     # Parse the JSON response
-    all_matches = response.json()['results']['data']
+    all_matches = response.json()
 
     matches_data = []
     for match in all_matches:
