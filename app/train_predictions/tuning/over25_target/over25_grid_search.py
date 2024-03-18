@@ -4,6 +4,7 @@ import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
 import numpy as np
+from configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VARBOSE
 
 # Set a random seed for reproducibility
 np.random.seed(42)
@@ -36,7 +37,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
         'min_samples_leaf': [3, 5],
-        'class_weight': class_weight,
+        'class_weight': 'balanced',
     }
 
     # Fitting grid search to the train data
@@ -44,10 +45,10 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         gridsearch = GridSearchCV(
             estimator=model,
             param_grid=param_grid,
-            cv=StratifiedKFold(n_splits=5),
+            cv=StratifiedKFold(n_splits=GRID_SEARCH_N_SPLITS),
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
-            verbose=2,
+            verbose=GRID_SEARCH_VARBOSE,
             n_jobs=-1,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
@@ -55,11 +56,11 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             estimator=model,
             param_distributions=param_grid,
             n_iter=10,
-            cv=5,
+            cv=GRID_SEARCH_N_SPLITS,
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             random_state=42,
-            verbose=3,
+            verbose=GRID_SEARCH_VARBOSE,
         ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score
