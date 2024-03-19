@@ -1,90 +1,72 @@
-import sys
-from configs.active_competitions.competitions_data import get_competition_ids, get_trained_competitions
-from app.train_predictions.hda_predictions import hda_predictions
-from app.train_predictions.bts_predictions import bts_predictions
-from app.train_predictions.over25_predictions import over25_predictions
-from app.train_predictions.cs_predictions import cs_predictions
-from app.matches.load_matches import load_for_training
-from configs.logger import Logger
+from run_train import run_train
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from configs.active_competitions.competitions_data import get_competition_ids, get_trained_competitions
+import argparse
 
-# Define constants
-HISTORY_LIMITS = [5, 7, 10, 15, 20, 25]
-TRAIN_TO_DATE = datetime.strptime('2023-10-31', '%Y-%m-%d')
-from_date = TRAIN_TO_DATE - relativedelta(months=48)
-to_date = TRAIN_TO_DATE - relativedelta(days=1)
+# Calculate from_date and to_date
+TRAIN_TO_DATE = datetime.strptime('2023-09-10', '%Y-%m-%d')
 
 
-def train(user_token, extra_args):
+def train(user_token, target=None, prediction_type=None, hyperparameters={}):
     print("\n............... START TRAIN PREDICTIONS ..................\n")
 
-    train_to_date = TRAIN_TO_DATE.strftime("%Y-%m-%d")
-    competition_ids = []
+    parser = argparse.ArgumentParser(
+        description='Train predictions with different configurations.')
+    parser.add_argument('--competition', type=int, help='Competition ID')
+    parser.add_argument('--ignore-saved', type=bool)
+    parser.add_argument('--is-grid-search', type=bool)
 
-    # Extract competition IDs from extra_args
-    for arg in extra_args:
-        if arg.startswith('--competition='):
-            competition_ids = [int(arg.split('=')[1])]
+    args, extra_args = parser.parse_known_args()
+    ignore_saved = args.ignore_saved
+    is_grid_search = args.is_grid_search
 
-    # Fetch competition IDs from the backend API if not provided
-    if not competition_ids:
-        competition_ids = get_competition_ids(user_token)
+    # If competition_id is provided, use it; otherwise, fetch from the backend API
+    competition_ids = [
+        args.competition] if args.competition is not None else get_competition_ids(user_token)
 
     trained_competition_ids = get_trained_competitions()
 
-    for history_limit_per_match in HISTORY_LIMITS:
-        PREDICTION_TYPE = f"regular_prediction_last_{history_limit_per_match}_matches_optimized_30"
+    # Set default prediction type or use provided prediction_type
+    # If prediction_type is provided, restrict history_limits to [8]
+    HISTORY_LIMITS = [5, 10, 15]
+    history_limits = HISTORY_LIMITS
 
-        for COMPETITION_ID in competition_ids:
-            if not trained_competition_ids or COMPETITION_ID not in trained_competition_ids:
-                compe_data = {'id': COMPETITION_ID,
-                              'prediction_type': PREDICTION_TYPE}
+    # Starting points for loops
+    start_from = [10, 6, 6]
+    end_at = [10, 6, 6]
 
-                Logger.info(f"Competition: {COMPETITION_ID}")
-                Logger.info(f"Updating training to date: {train_to_date}\n")
-                Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
+    for history_limit_per_match in history_limits:
+        # Skip if current history_limit_per_match is less than the specified starting point
+        if history_limit_per_match < start_from[0] or history_limit_per_match > end_at[0]:
+            continue
+        else:
+            for current_ground_limit_per_match in [4, 6, 8]:
+                if current_ground_limit_per_match < start_from[1] or current_ground_limit_per_match > end_at[1]:
+                    continue
+                else:
+                    for h2h_limit_per_match in [4, 6, 8]:
+                        if h2h_limit_per_match < start_from[2] or h2h_limit_per_match > end_at[2]:
+                            continue
+                        else:
+                            # Generate prediction type based on loop parameters
+                            PREDICTION_TYPE = (
+                                prediction_type
+                                or f"regular_prediction_{history_limit_per_match}_{current_ground_limit_per_match}_{h2h_limit_per_match}"
+                            )
+                            # Loop over competition IDs
+                            for COMPETITION_ID in competition_ids:
+                                if not trained_competition_ids or COMPETITION_ID not in trained_competition_ids:
+                                    compe_data = {'id': COMPETITION_ID,
+                                                  'prediction_type': PREDICTION_TYPE}
+                                    # Parameters for training
+                                    be_params = {
+                                        'history_limit_per_match': history_limit_per_match,
+                                        'current_ground_limit_per_match': current_ground_limit_per_match,
+                                        'h2h_limit_per_match': h2h_limit_per_match,
+                                        'to_date': TRAIN_TO_DATE,
+                                    }
 
-                be_params = from_date, to_date, history_limit_per_match
-                ignore_saved = any(arg.startswith('--ignore-saved')
-                                   for arg in extra_args)
-
-                # Load train and test data for all targets
-                train_matches, test_matches = load_for_training(
-                    COMPETITION_ID, user_token, be_params, per_page=200, train_ratio=.75, ignore_saved=ignore_saved)
-
-                total_matches = len(train_matches) + len(test_matches)
-
-                # Calculate the percentages
-                train_percentage = (
-                    int(round((len(train_matches) / total_matches) * 100)) if total_matches > 0 else 0)
-                test_percentage = (
-                    int(round((len(test_matches) / total_matches) * 100)) if total_matches > 0 else 0)
-
-                Logger.info(
-                    f"Number of train matches: {len(train_matches)}, ({train_percentage})%")
-                Logger.info(
-                    f"Number of test matches: {len(test_matches)}, ({test_percentage})%")
-
-                if total_matches == 0:
-                    print('No matches to make predictions!')
-                    return
-
-                is_grid_search = any(arg.startswith('grid-search')
-                                     for arg in extra_args)
-                is_random_search = False
-                update_model = True
-
-                hda_predictions(user_token, train_matches, test_matches, compe_data,
-                                is_grid_search, is_random_search=is_random_search, update_model=update_model)
-
-                bts_predictions(user_token, train_matches, test_matches, compe_data,
-                                is_grid_search, is_random_search=is_random_search, update_model=update_model)
-
-                over25_predictions(user_token, train_matches, test_matches, compe_data,
-                                   is_grid_search, is_random_search=is_random_search, update_model=update_model)
-
-                cs_predictions(user_token, train_matches, test_matches, compe_data,
-                               is_grid_search, is_random_search=is_random_search, update_model=update_model)
-
+                                    # Run training for the current configuration
+                                    run_train(user_token, compe_data=compe_data, target=target, be_params=be_params, ignore_saved=ignore_saved, is_grid_search=is_grid_search)
+                                    # return 0
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")
