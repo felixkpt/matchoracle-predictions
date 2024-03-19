@@ -4,10 +4,10 @@ from configs.active_competitions.competitions_data import get_competition_ids, g
 import argparse
 
 # Calculate from_date and to_date
-TRAIN_TO_DATE = datetime.strptime('2023-09-10', '%Y-%m-%d')
+TRAIN_TO_DATE = datetime.strptime('2023-12-31', '%Y-%m-%d')
 
 
-def train(user_token, target=None, prediction_type=None, hyperparameters={}):
+def train(user_token, prediction_type=None, hyperparameters={}):
     print("\n............... START TRAIN PREDICTIONS ..................\n")
 
     parser = argparse.ArgumentParser(
@@ -15,10 +15,16 @@ def train(user_token, target=None, prediction_type=None, hyperparameters={}):
     parser.add_argument('--competition', type=int, help='Competition ID')
     parser.add_argument('--ignore-saved', action='store_true', help='Ignore saved data')
     parser.add_argument('--is-grid-search', action='store_true', help='Enable grid search')
+    parser.add_argument('--target', choices=['hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
+                        help='Target for predictions')
 
     args, extra_args = parser.parse_known_args()
     ignore_saved = args.ignore_saved
     is_grid_search = args.is_grid_search
+    target = args.target
+
+    print(f"Main Prediction Target: {target if target else 'all'}")
+    print(f"")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
@@ -26,16 +32,11 @@ def train(user_token, target=None, prediction_type=None, hyperparameters={}):
 
     trained_competition_ids = get_trained_competitions()
 
-    # Set default prediction type or use provided prediction_type
-    # If prediction_type is provided, restrict history_limits to [8]
-    HISTORY_LIMITS = [5, 10, 15]
-    history_limits = HISTORY_LIMITS
-
     # Starting points for loops
-    start_from = [10, 6, 6]
-    end_at = [10, 6, 6]
+    start_from = [10, 6, 4]
+    end_at = [10, 6, 4]
 
-    for history_limit_per_match in history_limits:
+    for history_limit_per_match in [6, 10, 15]:
         # Skip if current history_limit_per_match is less than the specified starting point
         if history_limit_per_match < start_from[0] or history_limit_per_match > end_at[0]:
             continue

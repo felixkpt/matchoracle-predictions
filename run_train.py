@@ -12,7 +12,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
 
     # Load train and test data for all targets
     train_matches, test_matches = load_for_training(
-        compe_data['id'], user_token, be_params, per_page=200, train_ratio=.75, ignore_saved=ignore_saved)
+        compe_data['id'], user_token, be_params, per_page=150, train_ratio=.75, ignore_saved=ignore_saved)
 
     total_matches = len(train_matches) + len(test_matches)
 
@@ -33,7 +33,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
 
     is_random_search = False
     update_model = True
-
+    
     if target is None or target == 'hda':
         hda_predictions(user_token, train_matches, test_matches, compe_data,
                         is_grid_search, is_random_search=is_random_search, update_model=update_model)

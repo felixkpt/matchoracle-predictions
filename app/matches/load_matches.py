@@ -11,7 +11,8 @@ import requests
 def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
 
     history_limit_per_match = be_params.get('history_limit_per_match')
-    current_ground_limit_per_match = be_params.get('current_ground_limit_per_match')
+    current_ground_limit_per_match = be_params.get(
+        'current_ground_limit_per_match')
     h2h_limit_per_match = be_params.get('h2h_limit_per_match')
     to_date = be_params.get('to_date')
 
@@ -89,6 +90,8 @@ def get(url, user_token, filter=True):
     for match in all_matches:
 
         stats = match['stats']
+        if not stats:
+            continue
 
         # We will filter if load_for_training, dont filter if load_for_predictions
         if filter == True and not stats['has_results']:

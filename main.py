@@ -25,7 +25,7 @@ def main():
 
     if args.task == 'train':
         print('Task: Train\n')
-        train(user_token, extra_args)
+        train(user_token)
 
     elif args.task == 'predict':
         print('Task: Predict\n')
