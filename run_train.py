@@ -1,18 +1,20 @@
 from app.matches.load_matches import load_for_training
-from app.train_predictions.hda_predictions import hda_predictions
+from app.train_predictions.ft_hda_predictions import ft_hda_predictions
+from app.train_predictions.ht_hda_predictions import ht_hda_predictions
 from app.train_predictions.bts_predictions import bts_predictions
 from app.train_predictions.over15_predictions import over15_predictions
 from app.train_predictions.over25_predictions import over25_predictions
 from app.train_predictions.over35_predictions import over35_predictions
 from app.train_predictions.cs_predictions import cs_predictions
 from configs.logger import Logger
+from configs.active_competitions.competitions_data import trained_competitions
 
 
 def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_search):
 
     # Load train and test data for all targets
     train_matches, test_matches = load_for_training(
-        compe_data['id'], user_token, be_params, per_page=150, train_ratio=.75, ignore_saved=ignore_saved)
+        compe_data, user_token, be_params, per_page=1500, train_ratio=.75, ignore_saved=ignore_saved)
 
     total_matches = len(train_matches) + len(test_matches)
 
@@ -33,10 +35,14 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
 
     is_random_search = False
     update_model = True
-    
-    if target is None or target == 'hda':
-        hda_predictions(user_token, train_matches, test_matches, compe_data,
-                        is_grid_search, is_random_search=is_random_search, update_model=update_model)
+
+    if target is None or target == 'hda' or target == 'ft-hda':
+        ft_hda_predictions(user_token, train_matches, test_matches, compe_data,
+                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+
+    if target is None or target == 'ht-hda':
+        ht_hda_predictions(user_token, train_matches, test_matches, compe_data,
+                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'bts':
         bts_predictions(user_token, train_matches, test_matches, compe_data,
@@ -45,7 +51,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
     if target is None or target == 'over15':
         over15_predictions(user_token, train_matches, test_matches, compe_data,
                            is_grid_search, is_random_search=is_random_search, update_model=update_model)
-        
+
     if target is None or target == 'over25':
         over25_predictions(user_token, train_matches, test_matches, compe_data,
                            is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -57,3 +63,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
     if target is None or target == 'cs':
         cs_predictions(user_token, train_matches, test_matches, compe_data,
                        is_grid_search, is_random_search=is_random_search, update_model=update_model)
+
+    # Update trained competitions
+    compe_data['trained_to'] = be_params['to_date'].strftime('%Y-%m-%d %H:%M:%S')
+    trained_competitions(user_token, compe_data)

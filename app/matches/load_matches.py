@@ -1,4 +1,4 @@
-from configs.settings import API_BASE_URL
+from configs.settings import API_BASE_URL, basepath
 from datetime import datetime
 import json
 import os
@@ -8,7 +8,9 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+    COMPETITION_ID = compe_data.get('id')
+    PREDICTION_TYPE = compe_data.get('prediction_type')
 
     history_limit_per_match = be_params.get('history_limit_per_match')
     current_ground_limit_per_match = be_params.get(
@@ -18,9 +20,12 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
 
     to_date_str = to_date.strftime("%Y-%m-%d")
 
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(
-        dirname, f"saved/{COMPETITION_ID}_matches.json")
+    directory = os.path.abspath(
+        os.path.join(basepath(), "app/matches/saved/"))
+    os.makedirs(directory, exist_ok=True)
+
+    filename = os.path.abspath(os.path.join(
+        directory, f"{COMPETITION_ID}_matches.json"))
 
     loaded_results = None
     if not ignore_saved:
@@ -36,7 +41,7 @@ def load_for_training(COMPETITION_ID, user_token, be_params, per_page=2000, trai
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}&prediction_type={PREDICTION_TYPE}"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)

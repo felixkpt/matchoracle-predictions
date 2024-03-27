@@ -116,7 +116,7 @@ def get_hyperparameters(compe_data, target, outcomes=None):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/{target}_hyperparams.json")
+            f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json")
 
         try:
             with open(filename, 'r') as file:

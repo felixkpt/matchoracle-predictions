@@ -38,6 +38,7 @@ def cs_predictions(user_token, train_matches, test_matches, compe_data, is_grid_
 
     best_params = None
     if is_grid_search or not has_weights:
+        is_grid_search = True
         best_params = grid_search(
             model, train_frame, FEATURES, target, occurrences, is_random_search)
 

@@ -13,8 +13,10 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     parser = argparse.ArgumentParser(
         description='Train predictions with different configurations.')
     parser.add_argument('--competition', type=int, help='Competition ID')
-    parser.add_argument('--ignore-saved', action='store_true', help='Ignore saved data')
-    parser.add_argument('--is-grid-search', action='store_true', help='Enable grid search')
+    parser.add_argument('--ignore-saved', action='store_true',
+                        help='Ignore saved data')
+    parser.add_argument('--is-grid-search',
+                        action='store_true', help='Enable grid search')
     parser.add_argument('--target', choices=['hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
                         help='Target for predictions')
 
@@ -70,5 +72,6 @@ def train(user_token, prediction_type=None, hyperparameters={}):
                                     # Run training for the current configuration
                                     run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
                                               ignore_saved=ignore_saved, is_grid_search=is_grid_search)
+
                                     # return 0
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")

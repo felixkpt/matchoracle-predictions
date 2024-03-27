@@ -24,30 +24,30 @@ def normalizer(predict_proba):
         # Ensure draw probability is within the desired range
         
         # Handle 0
-        if percentage[0] < min_y_pred_0_prob:
-            less_by_prob = min_y_pred_0_prob - percentage[1]
-            percentage[0] = min_y_pred_0_prob
-            percentage[1] -= less_by_prob / 2  # Redistribute to 1
-            percentage[2] -= less_by_prob / 2  # Redistribute to 2
+        # if percentage[0] < min_y_pred_0_prob:
+        #     less_by_prob = min_y_pred_0_prob - percentage[1]
+        #     percentage[0] = min_y_pred_0_prob
+        #     percentage[1] -= less_by_prob / 2  # Redistribute to 1
+        #     percentage[2] -= less_by_prob / 2  # Redistribute to 2
 
-        # Handle 1
-        if percentage[1] < min_y_pred_1_prob:
-            less_by_prob = min_y_pred_1_prob - percentage[0]
-            percentage[1] = min_y_pred_1_prob
-            percentage[0] -= less_by_prob / 2  # Redistribute from 0
-            percentage[2] -= less_by_prob / 2  # Redistribute from 2
-        elif percentage[1] > max_y_pred_1_prob:
-            excess_by_prob = percentage[1] - max_y_pred_1_prob
-            percentage[1] = max_y_pred_1_prob
-            percentage[0] += excess_by_prob / 2  # Redistribute to 0
-            percentage[2] += excess_by_prob / 2  # Redistribute to 2
+        # # Handle 1
+        # if percentage[1] < min_y_pred_1_prob:
+        #     less_by_prob = min_y_pred_1_prob - percentage[0]
+        #     percentage[1] = min_y_pred_1_prob
+        #     percentage[0] -= less_by_prob / 2  # Redistribute from 0
+        #     percentage[2] -= less_by_prob / 2  # Redistribute from 2
+        # elif percentage[1] > max_y_pred_1_prob:
+        #     excess_by_prob = percentage[1] - max_y_pred_1_prob
+        #     percentage[1] = max_y_pred_1_prob
+        #     percentage[0] += excess_by_prob / 2  # Redistribute to 0
+        #     percentage[2] += excess_by_prob / 2  # Redistribute to 2
         
-        # Handle 2
-        if percentage[2] < min_y_pred_2_prob:
-            less_by_prob = min_y_pred_2_prob - percentage[2]
-            percentage[2] = min_y_pred_2_prob
-            percentage[0] -= less_by_prob / 2  # Redistribute to 1
-            percentage[1] -= less_by_prob / 2  # Redistribute to 2
+        # # Handle 2
+        # if percentage[2] < min_y_pred_2_prob:
+        #     less_by_prob = min_y_pred_2_prob - percentage[2]
+        #     percentage[2] = min_y_pred_2_prob
+        #     percentage[0] -= less_by_prob / 2  # Redistribute to 1
+        #     percentage[1] -= less_by_prob / 2  # Redistribute to 2
 
         y_pred_0_percentage = round(percentage[0])
         y_pred_1_percentage = round(percentage[1])
