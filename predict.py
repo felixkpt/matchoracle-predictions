@@ -14,7 +14,7 @@ import json
 import requests
 import argparse
 from configs.active_competitions.competitions_data import get_trained_competitions
-
+from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
 
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
@@ -176,7 +176,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
             'cs_unsensored': cs,
             'cs_proba_unsensored': cs_proba,
         }
-
+        
+        pred_obj = predictions_normalizer(pred_obj, compe_data)
         predictions.append(pred_obj)
 
     data = {
