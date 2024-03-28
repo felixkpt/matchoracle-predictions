@@ -1,14 +1,14 @@
 import pandas as pd
 from configs.logger import Logger
-from app.predictions_normalizers.over25_normalizer import normalizer
+from app.predictions_normalizers.hda_normalizer import normalizer
 from app.helpers.functions import get_model, get_features
 from app.helpers.print_results import print_preds_update_hyperparams
 
 
-def over25_predictions(matches, compe_data):
+def ht_hda_predictions(matches, compe_data):
 
-    target = 'over25_target'
-  
+    target = 'ht_hda_target'
+    
     Logger.info(f"Prediction Target: {target}")
 
     features, has_features = get_features(compe_data, target)

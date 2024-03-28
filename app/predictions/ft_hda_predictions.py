@@ -5,9 +5,9 @@ from app.helpers.functions import get_model, get_features
 from app.helpers.print_results import print_preds_update_hyperparams
 
 
-def hda_predictions(matches, compe_data):
+def ft_hda_predictions(matches, compe_data):
 
-    target = 'hda_target'
+    target = 'ft_hda_target'
     
     Logger.info(f"Prediction Target: {target}")
 
@@ -18,8 +18,11 @@ def hda_predictions(matches, compe_data):
     # Create train and test DataFrames
     predict_frame = pd.DataFrame(matches)
 
-    # Get the model
-    model = get_model(target, compe_data)
+    # Try getting the model
+    try:
+        model = get_model(target, compe_data)
+    except FileNotFoundError:
+        return [None, None]
 
     # Make predictions on the test data
     preds = model.predict(predict_frame[FEATURES])

@@ -122,5 +122,13 @@
     "1649": {
         "competition_trained_at": "2024-03-27 08:57:42",
         "last_predicted_at": null
+    },
+    "1709": {
+        "competition_trained_at": "2024-03-27 18:29:33",
+        "last_predicted_at": null
+    },
+    "1708": {
+        "competition_trained_at": "2024-03-27 18:43:37",
+        "last_predicted_at": null
     }
 }

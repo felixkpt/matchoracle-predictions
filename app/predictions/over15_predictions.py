@@ -5,9 +5,9 @@ from app.helpers.functions import get_model, get_features
 from app.helpers.print_results import print_preds_update_hyperparams
 
 
-def over25_predictions(matches, compe_data):
+def over15_predictions(matches, compe_data):
 
-    target = 'over25_target'
+    target = 'over15_target'
   
     Logger.info(f"Prediction Target: {target}")
 

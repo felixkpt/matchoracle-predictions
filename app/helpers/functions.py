@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, f1_score
 from sklearn.metrics import confusion_matrix as c_matrix
 from app.train_predictions.hyperparameters.hyperparameters import save_hyperparameters
-from configs.settings import COMMON_FEATURES
+from configs.settings import COMMON_FEATURES, basepath
 
 
 def natural_occurrences(possible_outcomes, train_frame, test_frame, target, print_output=True):
@@ -135,7 +135,7 @@ def feature_importance(model, compe_data, target, FEATURES, show=True, threshold
     PREDICTION_TYPE = compe_data['prediction_type']
 
     # Create the directory if it doesn't exist
-    directory = os.path.abspath(
+    directory = os.path.abspath(basepath(),
         f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/")
     os.makedirs(directory, exist_ok=True)
 
@@ -155,8 +155,8 @@ def get_features(compe_data, target):
 
     try:
         # Load hyperparameters data
-        filename = os.path.abspath(
-            f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json")
+        filename = os.path.abspath(basepath(),
+                                   f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json")
 
         try:
             with open(filename, 'r') as file:

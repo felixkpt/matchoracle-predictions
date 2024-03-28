@@ -13,17 +13,18 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     parser = argparse.ArgumentParser(
         description='Train predictions with different configurations.')
     parser.add_argument('--competition', type=int, help='Competition ID')
+    parser.add_argument('--target', choices=['hda', 'ft_hda', 'ht_hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
+                        help='Target for predictions')
+
     parser.add_argument('--ignore-saved', action='store_true',
                         help='Ignore saved data')
     parser.add_argument('--is-grid-search',
                         action='store_true', help='Enable grid search')
-    parser.add_argument('--target', choices=['hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
-                        help='Target for predictions')
 
     args, extra_args = parser.parse_known_args()
+    target = args.target
     ignore_saved = args.ignore_saved
     is_grid_search = args.is_grid_search
-    target = args.target
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"")

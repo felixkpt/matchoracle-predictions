@@ -18,8 +18,11 @@ def cs_predictions(matches, compe_data):
     # Create train and test DataFrames
     predict_frame = pd.DataFrame(matches)
 
-    # Get the model
-    model = get_model(target, compe_data)
+    # Try getting the model
+    try:
+        model = get_model(target, compe_data)
+    except FileNotFoundError:
+        return [None, None]
 
     # Make predictions on the test data
     preds = model.predict(predict_frame[FEATURES])
