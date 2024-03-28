@@ -110,8 +110,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
 
         ft_hda = str(ft_hda_preds[i])
         hda_proba = ft_hda_preds_proba[i]
-        ft_home_win_proba = hda_proba[1]
-        ft_draw_proba = hda_proba[0]
+        ft_home_win_proba = hda_proba[0]
+        ft_draw_proba = hda_proba[1]
         ft_away_win_proba = hda_proba[2]
 
         ht_hda = None
@@ -122,8 +122,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
         try:
             ht_hda = str(ht_hda_preds[i])
             hda_proba = ht_hda_preds_proba[i]
-            ht_home_win_proba = hda_proba[1]
-            ht_draw_proba = hda_proba[0]
+            ht_home_win_proba = hda_proba[0]
+            ht_draw_proba = hda_proba[1]
             ht_away_win_proba = hda_proba[2]
         except:
             TypeError

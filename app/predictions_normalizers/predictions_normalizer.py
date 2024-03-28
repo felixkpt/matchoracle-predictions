@@ -7,14 +7,10 @@ from app.train_predictions.hyperparameters.hyperparameters import get_occurrence
 
 def predictions_normalizer(prediction, compe_data):
     # Get occurrences from hyperparameters
-    occurrences = get_occurrences(compe_data, 'cs_target', 1.1)
+    occurrences = get_occurrences(compe_data, 'cs_target', 0.01)
 
     # Generating a list of dictionaries containing scores
     scores_dict = scores(occurrences)
-
-    print("Scores Dictionary:")
-    for score in scores_dict:
-        print(score)
 
     # Adjusting probabilities and full-time HDA values if they are equal
     ft_hda_pick = int(prediction['ft_hda_pick'])
@@ -31,7 +27,20 @@ def predictions_normalizer(prediction, compe_data):
         ft_hda_pick = 1
         prediction['ft_hda_pick'] = ft_hda_pick
 
-    # Adjusting probabilities and full-time HDA values if they are equal
+    # Determining margin categories for full-time HDA, both teams to score (BTS), and over 3.5 goals
+    # marion mar
+
+    ft_home_margin = ft_draw_margin = ft_away_margin = 0
+
+    print('Normalizer: ', ft_hda_pick, ft_home_win_proba, ft_draw_proba, ft_away_win_proba, '<<<< HDA')
+    if ft_home_win_proba > ft_draw_proba and ft_home_win_proba > ft_away_win_proba:
+        ft_home_margin = 1 if ft_home_win_proba < 34 else 3 if ft_home_win_proba < 40 else 3 if ft_home_win_proba < 55 else 4
+    elif ft_draw_proba > ft_home_win_proba and ft_draw_proba > ft_away_win_proba:
+        ft_draw_margin = 1 if ft_draw_proba < 34 else 2 if ft_draw_proba < 40 else 2 if ft_draw_proba < 55 else 3
+    elif ft_away_win_proba > ft_home_win_proba and ft_away_win_proba > ft_draw_proba:
+        ft_away_margin = 1 if ft_away_win_proba < 34 else 2 if ft_away_win_proba < 40 else 3 if ft_away_win_proba < 55 else 4
+
+    # Adjusting probabilities and half-time HDA values if they are equal
     if prediction['ht_hda_pick']:
         ht_hda_pick = int(prediction['ht_hda_pick'])
         ht_home_win_proba = prediction['ht_home_win_proba']
@@ -47,15 +56,14 @@ def predictions_normalizer(prediction, compe_data):
             ht_hda_pick = 1
             prediction['ht_hda_pick'] = ht_hda_pick
 
-    # Determining margin categories for full-time HDA, both teams to score (BTS), and over 3.5 goals
-    ft_home_margin = 0 if ft_home_win_proba < 34 else 1 if ft_home_win_proba < 40 else 2 if ft_home_win_proba < 55 else 3
-    ft_draw_margin = 0 if ft_draw_proba < 34 else 1 if ft_draw_proba < 40 else 2 if ft_draw_proba < 55 else 3
-    ft_away_margin = 0 if ft_away_win_proba < 34 else 1 if ft_away_win_proba < 40 else 2 if ft_away_win_proba < 55 else 3
     bts_pick = int(prediction['bts_pick'])
     gg_proba = prediction['gg_proba']
     bts_margin = 0 if gg_proba < 49 else 1 if gg_proba < 65 else 2 if gg_proba < 85 else 3
+
     over15_pick = int(prediction['over15_pick'])
+
     over25_pick = int(prediction['over25_pick'])
+
     over35_pick = int(prediction['over35_pick'])
     over35_margin = 0 if over35_pick < 40 else 1 if over35_pick < 55 else 2 if over35_pick < 60 else 3
 
@@ -63,7 +71,6 @@ def predictions_normalizer(prediction, compe_data):
     scores_dict = [
         score for score in scores_dict if score["hda"] == ft_hda_pick]
 
-    # Filtering scores based on full-time home margin
     scores_dict = [
         score for score in scores_dict if score["home_margin"] <= ft_home_margin]
 
@@ -79,7 +86,6 @@ def predictions_normalizer(prediction, compe_data):
     scores_dict = [
         score for score in scores_dict if score["over35_margin"] <= over35_margin]
 
-    
     # Extracting prediction values for comparison
     prediction_values = [ft_hda_pick, ft_home_margin, ft_draw_margin,
                          ft_away_margin, bts_pick, bts_margin, over15_pick, over25_pick, over35_pick]
@@ -89,22 +95,25 @@ def predictions_normalizer(prediction, compe_data):
 
     # Counting votes for each score based on prediction values
     for i, score in enumerate(scores_dict):
-        for j, key in enumerate(['ft_hda_pick', 'home_margin', 'draw_margin', 'away_margin', 'bts', 'bts_margin', 'over15', 'over25', 'over35']):
+        for j, key in enumerate(['hda', 'home_margin', 'draw_margin', 'away_margin', 'bts', 'bts_margin', 'over15', 'over25', 'over35']):
             votes[i] += 1 if prediction_values[j] == score[key] else 0
 
-    # Finding the maximum number of votes
-    max_votes = max(votes)
+    cs = 0
+    if len(votes) > 0 or True:
+        # Finding the maximum number of votes
+        max_votes = max(votes)
 
-    # Finding the indices of scores with the maximum number of votes
-    best_match_indices = [
-        i for i, vote in enumerate(votes) if vote == max_votes]
+        # Finding the indices of scores with the maximum number of votes
+        best_match_indices = [
+            i for i, vote in enumerate(votes) if vote == max_votes]
 
-    # Prefer the one with the highest index in case of a tie
-    best_match_index = max(best_match_indices)
-    best_match = scores_dict[best_match_index]
+        # Prefer the one with the highest index in case of a tie
+        best_match_index = max(best_match_indices)
+        best_match = scores_dict[best_match_index]
 
-    # Assigning the best match's correct score to the prediction
-    cs = best_match['cs']
+        # Assigning the best match's correct score to the prediction
+        cs = best_match['number']
+
     print('CS RES:', cs)
     prediction['cs'] = cs
 

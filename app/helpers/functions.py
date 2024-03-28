@@ -65,7 +65,7 @@ def save_model(model, train_frame, test_frame, FEATURES, target, compe_data):
 
     # Create the directory if it doesn't exist
     directory = os.path.abspath(
-        f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/")
+        os.path.join(basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/"))
     os.makedirs(directory, exist_ok=True)
 
     # Save the model
@@ -79,7 +79,7 @@ def get_model(target, compe_data):
     PREDICTION_TYPE = compe_data['prediction_type']
     # Save the model
     filename = os.path.abspath(
-        f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_model.joblib")
+        os.path.join(basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_model.joblib"))
     return joblib.load(filename)
 
 
@@ -135,8 +135,8 @@ def feature_importance(model, compe_data, target, FEATURES, show=True, threshold
     PREDICTION_TYPE = compe_data['prediction_type']
 
     # Create the directory if it doesn't exist
-    directory = os.path.abspath(basepath(),
-        f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/")
+    directory = os.path.abspath(os.path.join(basepath(),
+                                             f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/"))
     os.makedirs(directory, exist_ok=True)
 
     # Save the features
@@ -155,8 +155,8 @@ def get_features(compe_data, target):
 
     try:
         # Load hyperparameters data
-        filename = os.path.abspath(basepath(),
-                                   f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json")
+        filename = os.path.abspath(os.path.join(basepath(),
+                                   f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json"))
 
         try:
             with open(filename, 'r') as file:

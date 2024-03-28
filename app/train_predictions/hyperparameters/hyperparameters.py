@@ -49,7 +49,7 @@ def save_hyperparameters(compe_data, target, user_token):
 
     # Load existing hyperparameters data
     directory = os.path.abspath(
-        f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/")
+        os.path.join(basepath(), f"app/train_predictions/hyperparameters/{compe_data['prediction_type']}/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(f"{directory}/{target}_hyperparams.json")
@@ -117,7 +117,7 @@ def get_hyperparameters(compe_data, target, outcomes=None):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json")
+            os.path.join(basepath(), f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
 
         try:
             with open(filename, 'r') as file:
@@ -146,8 +146,6 @@ def get_hyperparameters(compe_data, target, outcomes=None):
 
     return [hyper_params, has_weights]
 
-import os
-import json
 
 def get_occurrences(compe_data, target, min_threshold=0.0):
     compe_id = str(compe_data.get('id'))
@@ -168,12 +166,14 @@ def get_occurrences(compe_data, target, min_threshold=0.0):
         occurrences = best_params.get("occurrences", {}) if best_params else {}
 
         # Filter occurrences based on min_threshold
-        filtered_occurrences = {key: value for key, value in occurrences.items() if value >= min_threshold}
+        filtered_occurrences = {
+            key: value for key, value in occurrences.items() if value >= min_threshold}
 
     except (KeyError, TypeError):
         filtered_occurrences = {}
 
     return filtered_occurrences
+
 
 def parse_json(json_data):
     if isinstance(json_data, dict):
