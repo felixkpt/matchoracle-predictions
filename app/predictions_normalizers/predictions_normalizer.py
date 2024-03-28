@@ -10,10 +10,11 @@ def predictions_normalizer(prediction, compe_data):
     occurrences = get_occurrences(compe_data, 'cs_target', 1.1)
 
     # Generating a list of dictionaries containing scores
-    dictionary_list = scores(occurrences)
+    scores_dict = scores(occurrences)
 
-    print(dictionary_list)
-    print('33')
+    print("Scores Dictionary:")
+    for score in scores_dict:
+        print(score)
 
     # Adjusting probabilities and full-time HDA values if they are equal
     ft_hda_pick = int(prediction['ft_hda_pick'])
@@ -59,24 +60,24 @@ def predictions_normalizer(prediction, compe_data):
     over35_margin = 0 if over35_pick < 40 else 1 if over35_pick < 55 else 2 if over35_pick < 60 else 3
 
     # Filtering scores based on full-time HDA
-    dictionary_list = [
-        score for score in dictionary_list if score["ft_hda_pick"] == ft_hda_pick]
+    scores_dict = [
+        score for score in scores_dict if score["hda"] == ft_hda_pick]
 
     # Filtering scores based on full-time home margin
-    dictionary_list = [
-        score for score in dictionary_list if score["home_margin"] <= ft_home_margin]
+    scores_dict = [
+        score for score in scores_dict if score["home_margin"] <= ft_home_margin]
 
     # Filtering scores based on full-time away margin
-    dictionary_list = [
-        score for score in dictionary_list if score["away_margin"] <= ft_away_margin]
+    scores_dict = [
+        score for score in scores_dict if score["away_margin"] <= ft_away_margin]
 
     # Filtering scores based on both teams to score margin
-    dictionary_list = [
-        score for score in dictionary_list if score["bts_margin"] <= bts_margin]
+    scores_dict = [
+        score for score in scores_dict if score["bts_margin"] <= bts_margin]
 
     # Filtering scores based on over 3.5 goals margin
-    dictionary_list = [
-        score for score in dictionary_list if score["over35_margin"] <= over35_margin]
+    scores_dict = [
+        score for score in scores_dict if score["over35_margin"] <= over35_margin]
 
     
     # Extracting prediction values for comparison
@@ -84,10 +85,10 @@ def predictions_normalizer(prediction, compe_data):
                          ft_away_margin, bts_pick, bts_margin, over15_pick, over25_pick, over35_pick]
 
     # Initializing votes for each score
-    votes = [0] * len(dictionary_list)
+    votes = [0] * len(scores_dict)
 
     # Counting votes for each score based on prediction values
-    for i, score in enumerate(dictionary_list):
+    for i, score in enumerate(scores_dict):
         for j, key in enumerate(['ft_hda_pick', 'home_margin', 'draw_margin', 'away_margin', 'bts', 'bts_margin', 'over15', 'over25', 'over35']):
             votes[i] += 1 if prediction_values[j] == score[key] else 0
 
@@ -100,7 +101,7 @@ def predictions_normalizer(prediction, compe_data):
 
     # Prefer the one with the highest index in case of a tie
     best_match_index = max(best_match_indices)
-    best_match = dictionary_list[best_match_index]
+    best_match = scores_dict[best_match_index]
 
     # Assigning the best match's correct score to the prediction
     cs = best_match['cs']
