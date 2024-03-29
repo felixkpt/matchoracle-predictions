@@ -17,14 +17,14 @@ def header(compe_data, preds):
 
 def print_preds_update_hyperparams(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
-    if target == 'hda_target':
+    if target.endswith('hda_target'):
         print_hda_predictions(user_token, target, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)
     if target == 'bts_target':
         print_bts_predictions(user_token, target, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)
-    if target == 'over25_target':
-        print_over25_predictions(user_token, target, compe_data, preds,
+    if target == 'over15_target' or target == 'over25_target' or target == 'over35_target':
+        print_over_predictions(user_token, target, compe_data, preds,
                                  predict_proba, train_frame, test_frame, print_minimal)
     if target == 'cs_target':
         print_cs_predictions(user_token, target, compe_data, preds,
@@ -111,7 +111,7 @@ def print_bts_predictions(user_token, target, compe_data, preds, predict_proba, 
         print(f"Predictions: {preds}")
 
 
-def print_over25_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_over_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
     total_predictions, class_counts = header(compe_data, preds)
 

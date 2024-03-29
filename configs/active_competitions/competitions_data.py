@@ -11,7 +11,7 @@ COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?active_only=1&page=1&p
 def get_competition_ids(user_token):
     # Save the features
     filename = os.path.abspath(
-        os.path.join(basepath(), "configs/active_competitions/competition_data.json"))
+        os.path.join(basepath(), "configs/active_competitions/saved/competition_data.json"))
 
     try:
         # Read the JSON file
@@ -52,7 +52,7 @@ def get_competition_ids(user_token):
 
 def trained_competitions(user_token, compe_data):
     directory = os.path.abspath(
-        os.path.join(basepath(), "configs/active_competitions/"))
+        os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(
@@ -88,7 +88,7 @@ def trained_competitions(user_token, compe_data):
 
 def update_trained_competitions(compe_data):
     directory = os.path.abspath(
-        os.path.join(basepath(), "configs/active_competitions/"))
+        os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(
@@ -116,7 +116,7 @@ def update_trained_competitions(compe_data):
 
 def get_trained_competitions(ignore_filters=False, ignore_timimg=False):
     directory = os.path.abspath(
-        os.path.join(basepath(), "configs/active_competitions/"))
+        os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(
