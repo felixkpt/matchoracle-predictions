@@ -152,7 +152,7 @@ def get_occurrences(compe_data, target, min_threshold=0.0):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            os.path.join(basepath(), f"app/train_predictions/hyperparameters/saved/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
+            os.path.join(basepath(), f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
 
         try:
             with open(filename, 'r') as file:

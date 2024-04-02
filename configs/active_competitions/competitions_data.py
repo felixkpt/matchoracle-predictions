@@ -9,9 +9,12 @@ COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?active_only=1&page=1&p
 
 
 def get_competition_ids(user_token):
+    directory = os.path.abspath(
+        os.path.join(basepath(), f"configs/active_competitions/saved/"))
+    os.makedirs(directory, exist_ok=True)
+
     # Save the features
-    filename = os.path.abspath(
-        os.path.join(basepath(), "configs/active_competitions/saved/competition_data.json"))
+    filename = os.path.abspath(f"{directory}/competition_data.json")
 
     try:
         # Read the JSON file
@@ -114,7 +117,7 @@ def update_trained_competitions(compe_data):
         json.dump(trained_compe_data, file, indent=4)
 
 
-def get_trained_competitions(ignore_filters=False, ignore_timimg=False):
+def get_trained_competitions(ignore_timimg=False):
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -127,10 +130,6 @@ def get_trained_competitions(ignore_filters=False, ignore_timimg=False):
             trained_compe_data = parse_json(json.load(file))
     except FileNotFoundError:
         trained_compe_data = {}
-
-    if ignore_filters:
-        # If ignore_filters is True, return all competition IDs without applying the time-based filter
-        return trained_compe_data.keys()
 
     # Get the current time
     current_time = datetime.now()

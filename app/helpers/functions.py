@@ -144,6 +144,8 @@ def feature_importance(model, compe_data, target, FEATURES, show=True, threshold
     # Save the sorted data back to the JSON file
     with open(filename, 'w') as file:
         json.dump(best_features, file, indent=4)
+    
+    return best_features
 
 
 def get_features(compe_data, target):

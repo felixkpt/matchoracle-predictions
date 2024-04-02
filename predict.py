@@ -16,6 +16,7 @@ import argparse
 from configs.active_competitions.competitions_data import get_trained_competitions
 from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
 
+
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
@@ -27,27 +28,29 @@ def predict(user_token):
     parser.add_argument('--target', choices=['hda', 'ft_hda', 'ht_hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
                         help='Target for predictions')
 
-    parser.add_argument('--ignore-filters', action='store_true',
-                        help='Ignore filters data')
-    parser.add_argument('--ignore-timimg', action='store_true',
+    parser.add_argument('--ignore-timing', action='store_true',
                         help='Ignore timing data')
 
     args, extra_args = parser.parse_known_args()
     target = args.target
-    ignore_filters = args.ignore_filters
-    ignore_timimg = args.ignore_timimg
+    ignore_timing = args.ignore_timing
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
-        args.competition] if args.competition is not None else get_trained_competitions(ignore_filters, ignore_timimg)
+        args.competition] if args.competition is not None else get_trained_competitions(ignore_timing)
 
     # Loop over competition IDs
     for COMPETITION_ID in competition_ids:
         # Calculate from_date and to_date
-        target_date_init = datetime.strptime('2024-01-01', '%Y-%m-%d')
+        from_date = datetime.today()
+        from_date = datetime.strptime('2024-02-02', '%Y-%m-%d')
+
+        to_date = datetime.strptime('2024-02-02', '%Y-%m-%d')
+        # to_date = datetime.today() + relativedelta(days=7)
+
         compe_data = {}
         compe_data['id'] = COMPETITION_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
@@ -55,11 +58,11 @@ def predict(user_token):
         Logger.info(f"Competition: {COMPETITION_ID}")
         Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
 
-        for i in range(0, 90):
-
-            target_date = target_date_init - relativedelta(days=-1 * i)
-            target_date = target_date.strftime("%Y-%m-%d")
-
+        # Loop through each day from from_date to to_date
+        current_date = from_date
+        while current_date <= to_date:
+            # Your code for processing each day goes here
+            target_date = current_date.strftime("%Y-%m-%d")
             Logger.info(f"Competition: {COMPETITION_ID}")
             Logger.info(f"Date: {target_date}\n")
 
@@ -80,13 +83,21 @@ def predict(user_token):
 
                 over15_preds = over15_predictions(matches, compe_data)
                 over25_preds = over25_predictions(matches, compe_data)
+
                 over35_preds = over35_predictions(matches, compe_data)
 
                 cs_preds = cs_predictions(matches, compe_data)
 
-                merge_and_store_predictions(user_token, compe_data, target_date, matches, ft_hda_preds, ht_hda_preds,
-                                            bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
+                if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
+                    merge_and_store_predictions(user_token, compe_data, target_date, matches, ft_hda_preds, ht_hda_preds,
+                                                bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
+                else:
+                    print('One of the required preds is null.')
+
             print(f"______________\n")
+
+            # Move to the next day
+            current_date += relativedelta(days=1)
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
@@ -107,6 +118,9 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
 
     predictions = []
     for i, match in enumerate(matches):
+        print('Match ID:', match['id'])
+        if 21410 != match['id']:
+            continue
 
         ft_hda = str(ft_hda_preds[i])
         hda_proba = ft_hda_preds_proba[i]
@@ -125,8 +139,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
             ht_home_win_proba = hda_proba[0]
             ht_draw_proba = hda_proba[1]
             ht_away_win_proba = hda_proba[2]
-        except:
-            TypeError
+        except TypeError:
+            pass
 
         bts = str(bts_preds[i])
         bts_proba = bts_preds_proba[i]
@@ -176,7 +190,7 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
             'cs_unsensored': cs,
             'cs_proba_unsensored': cs_proba,
         }
-        
+
         pred_obj = predictions_normalizer(pred_obj, compe_data)
         predictions.append(pred_obj)
 

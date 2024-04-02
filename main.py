@@ -12,7 +12,7 @@ def main():
     user_token = get_user_token(EMAIL, PASSWORD)
 
     if not user_token:
-        Logger.error("Failed to obtain user token. Exiting.")
+        Logger.info("Failed to obtain user token. Exiting.")
         return
 
     Logger.info("User token obtained successfully.")

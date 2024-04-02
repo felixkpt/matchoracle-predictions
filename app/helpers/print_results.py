@@ -48,6 +48,7 @@ def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, 
     print(f"Percentage of Away Win (2): {y_pred_2}%")
     print(f"")
 
+
     if compe_data and 'is_training' in compe_data and compe_data['is_training']:
         compe_data['predicted'] = predicted
         compe_data['train_counts'] = len(train_frame)

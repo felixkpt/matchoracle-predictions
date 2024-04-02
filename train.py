@@ -4,7 +4,7 @@ from configs.active_competitions.competitions_data import get_competition_ids, g
 import argparse
 
 # Calculate from_date and to_date
-TRAIN_TO_DATE = datetime.strptime('2023-12-31', '%Y-%m-%d')
+TRAIN_TO_DATE = datetime.strptime('2024-01-30', '%Y-%m-%d')
 
 
 def train(user_token, prediction_type=None, hyperparameters={}):
@@ -21,10 +21,14 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     parser.add_argument('--is-grid-search',
                         action='store_true', help='Enable grid search')
 
+    parser.add_argument('--ignore-trained', action='store_true',
+                        help='Ignore timing data')
+
     args, extra_args = parser.parse_known_args()
     target = args.target
     ignore_saved = args.ignore_saved
     is_grid_search = args.is_grid_search
+    ignore_trained = args.ignore_trained
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"")
@@ -32,8 +36,8 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
         args.competition] if args.competition is not None else get_competition_ids(user_token)
-
-    trained_competition_ids = get_trained_competitions()
+    
+    trained_competition_ids = [] if ignore_trained is not None else get_trained_competitions()
 
     # Starting points for loops
     start_from = [10, 6, 4]

@@ -18,6 +18,7 @@ def bts_predictions(matches, compe_data):
     # Create train and test DataFrames
     predict_frame = pd.DataFrame(matches)
 
+    print(target, compe_data)
     # Try getting the model
     try:
         model = get_model(target, compe_data)

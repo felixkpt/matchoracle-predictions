@@ -1,12 +1,6 @@
-from app.matches.load_matches import load_for_training
-from app.train_predictions.ft_hda_predictions import ft_hda_predictions
-from app.train_predictions.ht_hda_predictions import ht_hda_predictions
-from app.train_predictions.bts_predictions import bts_predictions
-from app.train_predictions.over15_predictions import over15_predictions
-from app.train_predictions.over25_predictions import over25_predictions
-from app.train_predictions.over35_predictions import over35_predictions
-from app.train_predictions.cs_predictions import cs_predictions
 from configs.logger import Logger
+from app.matches.load_matches import load_for_training
+from app.train_predictions.train_predictions import train_predictions
 from configs.active_competitions.competitions_data import trained_competitions
 
 
@@ -37,33 +31,41 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
     update_model = True
 
     if target is None or target == 'hda' or target == 'ft-hda':
-        ft_hda_predictions(user_token, train_matches, test_matches, compe_data,
-                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = [0, 1, 2]
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'ft_hda_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'ht-hda':
-        ht_hda_predictions(user_token, train_matches, test_matches, compe_data,
-                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = [0, 1, 2]
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'ht_hda_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'bts':
-        bts_predictions(user_token, train_matches, test_matches, compe_data,
-                        is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = [0, 1, 2]
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'bts_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'over15':
-        over15_predictions(user_token, train_matches, test_matches, compe_data,
-                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = [0, 1]
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'over15_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'over25':
-        over25_predictions(user_token, train_matches, test_matches, compe_data,
-                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = [0, 1]
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'over25_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'over35':
-        over35_predictions(user_token, train_matches, test_matches, compe_data,
-                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = [0, 1]
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'over35_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     if target is None or target == 'cs':
-        cs_predictions(user_token, train_matches, test_matches, compe_data,
-                       is_grid_search, is_random_search=is_random_search, update_model=update_model)
+        outcomes = range(0, 121)
+        train_predictions(user_token, train_matches, test_matches, compe_data, 'cs_target', outcomes,
+                          is_grid_search, is_random_search=is_random_search, update_model=update_model)
 
     # Update trained competitions
-    compe_data['trained_to'] = be_params['to_date'].strftime('%Y-%m-%d %H:%M:%S')
+    compe_data['trained_to'] = be_params['to_date'].strftime(
+        '%Y-%m-%d %H:%M:%S')
     trained_competitions(user_token, compe_data)
