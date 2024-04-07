@@ -17,9 +17,7 @@ from app.train_predictions.tuning.cs_target.cs_grid_search import grid_search as
 # Normalizer imports
 from app.predictions_normalizers.hda_normalizer import normalizer as hda_normalizer
 from app.predictions_normalizers.bts_normalizer import normalizer as bts_normalizer
-from app.predictions_normalizers.over15_normalizer import normalizer as over15_normalizer
-from app.predictions_normalizers.over25_normalizer import normalizer as over25_normalizer
-from app.predictions_normalizers.over35_normalizer import normalizer as over35_normalizer
+from app.predictions_normalizers.over_normalizer import normalizer as over_normalizer
 from app.predictions_normalizers.cs_normalizer import normalizer as cs_normalizer
 
 
@@ -101,11 +99,11 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
     elif target == 'bts_target':
         normalizer_function = bts_normalizer
     elif target == 'over15_target':
-        normalizer_function = over15_normalizer
+        normalizer_function = over_normalizer
     elif target == 'over25_target':
-        normalizer_function = over25_normalizer
+        normalizer_function = over_normalizer
     elif target == 'over35_target':
-        normalizer_function = over35_normalizer
+        normalizer_function = over_normalizer
     elif target == 'cs_target':
         normalizer_function = cs_normalizer
     else:

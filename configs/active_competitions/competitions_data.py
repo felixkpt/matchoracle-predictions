@@ -89,7 +89,7 @@ def trained_competitions(user_token, compe_data):
         json.dump(trained_compe_data, file, indent=4)
 
 
-def update_trained_competitions(compe_data):
+def update_last_predicted_at(compe_data):
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)

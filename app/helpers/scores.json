@@ -273,7 +273,7 @@
         "draw_margin": 0,
         "away_margin": 7,
         "bts": 1,
-        "bts_margin": 1,
+        "bts_margin": 2,
         "over15": 1,
         "over25": 1,
         "over35": 1,

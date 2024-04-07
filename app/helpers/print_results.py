@@ -1,5 +1,6 @@
 from app.helpers.functions import preds_score, confusion_matrix
 from collections import Counter
+import numpy as np
 
 
 def header(compe_data, preds):
@@ -25,7 +26,7 @@ def print_preds_update_hyperparams(user_token, target, compe_data, preds, predic
                               predict_proba, train_frame, test_frame, print_minimal)
     if target == 'over15_target' or target == 'over25_target' or target == 'over35_target':
         print_over_predictions(user_token, target, compe_data, preds,
-                                 predict_proba, train_frame, test_frame, print_minimal)
+                               predict_proba, train_frame, test_frame, print_minimal)
     if target == 'cs_target':
         print_cs_predictions(user_token, target, compe_data, preds,
                              predict_proba, train_frame, test_frame, print_minimal)
@@ -48,7 +49,6 @@ def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, 
     print(f"Percentage of Away Win (2): {y_pred_2}%")
     print(f"")
 
-
     if compe_data and 'is_training' in compe_data and compe_data['is_training']:
         compe_data['predicted'] = predicted
         compe_data['train_counts'] = len(train_frame)
@@ -60,6 +60,7 @@ def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, 
         confusion_matrix(test_frame, target, preds)
 
     if not print_minimal:
+        matches = np.array(test_frame)
         # Print the percentages for each match
         for i, match_data in enumerate(predict_proba):
             y_pred_0, y_pred_1, y_pred_2 = match_data
@@ -68,7 +69,7 @@ def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, 
             y_pred_2 = round(y_pred_2)
 
             print(
-                f"Match {i + 1}: H: {y_pred_0}%, D: {y_pred_1}%, A: {y_pred_2}%")
+                f"Match {i + 1}, #{matches[i][0]}: H: {y_pred_0}%, D: {y_pred_1}%, A: {y_pred_2}%")
         print(f"")
 
     print(f"Predictions: {preds}")
@@ -100,13 +101,16 @@ def print_bts_predictions(user_token, target, compe_data, preds, predict_proba, 
         confusion_matrix(test_frame, target, preds)
 
     if not print_minimal:
+        matches = np.array(test_frame)
         # Print the percentages for each match
         for i, match_data in enumerate(predict_proba):
             y_pred_0, y_pred_1 = match_data
             y_pred_1 = round(y_pred_1)
             y_pred_0 = round(y_pred_0)
 
-            print(f"Match {i + 1}: No: {y_pred_0}%, Yes: {y_pred_1}%")
+            print(
+                f"Match {i + 1}, #{matches[i][0]}: NO: {y_pred_0}%, YES: {y_pred_1}%")
+
         print(f"")
 
         print(f"Predictions: {preds}")
@@ -141,13 +145,15 @@ def print_over_predictions(user_token, target, compe_data, preds, predict_proba,
         confusion_matrix(test_frame, target, preds)
 
     if not print_minimal:
+        matches = np.array(test_frame)
         # Print the percentages for each match
         for i, match_data in enumerate(predict_proba):
             y_pred_0, y_pred_1 = match_data
             y_pred_1 = round(y_pred_1)
             y_pred_0 = round(y_pred_0)
 
-            print(f"Match {i + 1}: UN: {y_pred_0}%, OV: {y_pred_1}%")
+            print(
+                f"Match {i + 1}, #{matches[i][0]}: UN: {y_pred_0}%, OV: {y_pred_1}%")
         print(f"")
 
         print(f"Predictions: {preds}")
@@ -165,13 +171,14 @@ def print_cs_predictions(user_token, target, compe_data, preds, predict_proba, t
     predicted = {}
 
     if not print_minimal:
+        matches = np.array(test_frame)
         # Print the percentages for each match
         for i, pred in enumerate(preds):
             proba = max(predict_proba[i])
 
             cs = int(pred)
             print(
-                f"Match {i + 1}: CS: {cs} ({proba}%)")
+                f"Match {i + 1}, #{matches[i][0]}: CS: {cs} ({proba}%)")
 
             if cs in predicted:
                 predicted[cs] = predicted[cs] + 1
@@ -183,7 +190,7 @@ def print_cs_predictions(user_token, target, compe_data, preds, predict_proba, t
             predicted[cs] = round(predicted[cs] / preds_len * 100, 2)
 
         predicted = dict(
-        sorted(predicted.items(), key=lambda x: int(x[0])))
+            sorted(predicted.items(), key=lambda x: int(x[0])))
         print(f"")
 
         print(f"Predictions: {preds}")

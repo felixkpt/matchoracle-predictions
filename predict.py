@@ -15,6 +15,8 @@ import requests
 import argparse
 from configs.active_competitions.competitions_data import get_trained_competitions
 from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
+from configs.active_competitions.competitions_data import update_last_predicted_at
+import numpy as np
 
 
 def predict(user_token):
@@ -36,26 +38,28 @@ def predict(user_token):
     ignore_timing = args.ignore_timing
 
     print(f"Main Prediction Target: {target if target else 'all'}")
-    print(f"")
+    print(f"Timing ignored: {ignore_timing}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
         args.competition] if args.competition is not None else get_trained_competitions(ignore_timing)
 
     # Loop over competition IDs
-    for COMPETITION_ID in competition_ids:
+    for i, COMPETITION_ID in enumerate(competition_ids):
         # Calculate from_date and to_date
         from_date = datetime.today()
-        from_date = datetime.strptime('2024-02-02', '%Y-%m-%d')
+        from_date = datetime.strptime('2024-01-01', '%Y-%m-%d')
 
-        to_date = datetime.strptime('2024-02-02', '%Y-%m-%d')
+        to_date = datetime.strptime('2024-04-14', '%Y-%m-%d')
         # to_date = datetime.today() + relativedelta(days=7)
 
         compe_data = {}
         compe_data['id'] = COMPETITION_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
 
-        Logger.info(f"Competition: {COMPETITION_ID}")
+        Logger.info(
+            f"{i+1}/{len(competition_ids)}. Competition: #{COMPETITION_ID}")
+
         Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
 
         # Loop through each day from from_date to to_date
@@ -91,6 +95,8 @@ def predict(user_token):
                 if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
                     merge_and_store_predictions(user_token, compe_data, target_date, matches, ft_hda_preds, ht_hda_preds,
                                                 bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
+                    # Update last predicted competitions
+                    update_last_predicted_at(compe_data)
                 else:
                     print('One of the required preds is null.')
 
@@ -98,6 +104,8 @@ def predict(user_token):
 
             # Move to the next day
             current_date += relativedelta(days=1)
+
+        print(f"--- End preds for compe #{COMPETITION_ID} ---\n")
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
@@ -119,8 +127,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
     predictions = []
     for i, match in enumerate(matches):
         print('Match ID:', match['id'])
-        if 21410 != match['id']:
-            continue
+        # if 95631 != match['id']:
+        #     continue
 
         ft_hda = str(ft_hda_preds[i])
         hda_proba = ft_hda_preds_proba[i]
@@ -133,14 +141,16 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
         ht_home_win_proba = None
         ht_draw_proba = None
         ht_away_win_proba = None
-        try:
-            ht_hda = str(ht_hda_preds[i])
-            hda_proba = ht_hda_preds_proba[i]
-            ht_home_win_proba = hda_proba[0]
-            ht_draw_proba = hda_proba[1]
-            ht_away_win_proba = hda_proba[2]
-        except TypeError:
-            pass
+        if ht_hda_preds_proba and len(ht_hda_preds_proba):
+            try:
+                # print(ht_hda_preds_proba)
+                ht_hda = str(ht_hda_preds[i])
+                hda_proba = ht_hda_preds_proba[i]
+                ht_home_win_proba = hda_proba[0]
+                ht_draw_proba = hda_proba[1]
+                ht_away_win_proba = hda_proba[2]
+            except TypeError:
+                pass
 
         bts = str(bts_preds[i])
         bts_proba = bts_preds_proba[i]
@@ -154,9 +164,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
         over35 = str(over35_preds[i])
         over35_proba = over35_preds_proba[i]
 
-        key = cs_preds[i]
         cs = str(cs_preds[i])
-        cs_proba = cs_preds_proba[i][key]
+        cs_proba = max(cs_preds_proba[i])
 
         pred_obj = {
             'id': match['id'],
@@ -175,20 +184,21 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
             'gg_proba': bts_proba[1],
             'ng_proba': bts_proba[0],
 
-            'over15_pick': over15,
+            'over_under15_pick': over15,
             'over15_proba': over15_proba[1],
             'under15_proba': over15_proba[0],
 
-            'over25_pick': over25,
+            'over_under25_pick': over25,
             'over25_proba': over25_proba[1],
             'under25_proba': over25_proba[0],
 
-            'over35_pick': over35,
+            'over_under35_pick': over35,
             'over35_proba': over35_proba[1],
             'under35_proba': over35_proba[0],
 
-            'cs_unsensored': cs,
-            'cs_proba_unsensored': cs_proba,
+            # cs will be updated in normalizer
+            'cs': cs,
+            'cs_proba': cs_proba,
         }
 
         pred_obj = predictions_normalizer(pred_obj, compe_data)
@@ -201,8 +211,9 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
         'date': str(target_date),
         'predictions': predictions}
 
-    message = storePredictions(data, user_token)
-    print(message)
+    if len(data['predictions']) > 0:
+        message = storePredictions(data, user_token)
+        print(message)
 
 
 def storePredictions(data, user_token):
