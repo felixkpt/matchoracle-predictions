@@ -1,10 +1,11 @@
 from run_train import run_train
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from configs.active_competitions.competitions_data import get_competition_ids, get_trained_competitions
 import argparse
 
 # Calculate from_date and to_date
-TRAIN_TO_DATE = datetime.strptime('2024-01-30', '%Y-%m-%d')
+TRAIN_TO_DATE = datetime.today() + relativedelta(days=-30 * 6)
 
 
 def train(user_token, prediction_type=None, hyperparameters={}):
@@ -31,19 +32,19 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     ignore_trained = args.ignore_trained
 
     print(f"Main Prediction Target: {target if target else 'all'}")
-    print(f"")
+    print(f"Training to {TRAIN_TO_DATE}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
         args.competition] if args.competition is not None else get_competition_ids(user_token)
-    
+
     trained_competition_ids = [] if ignore_trained is not None else get_trained_competitions()
 
     # Starting points for loops
-    start_from = [10, 6, 4]
-    end_at = [10, 6, 4]
+    start_from = [12, 6, 4]
+    end_at = [12, 6, 4]
 
-    for history_limit_per_match in [6, 10, 15]:
+    for history_limit_per_match in [6, 10, 12, 15]:
         # Skip if current history_limit_per_match is less than the specified starting point
         if history_limit_per_match < start_from[0] or history_limit_per_match > end_at[0]:
             continue

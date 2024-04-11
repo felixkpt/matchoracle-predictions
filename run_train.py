@@ -24,7 +24,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         f"Number of test matches: {len(test_matches)}, ({test_percentage})%")
 
     if total_matches == 0:
-        print('No matches to make predictions!')
+        print('No matches to make predictions!\n')
         return
 
     is_random_search = False

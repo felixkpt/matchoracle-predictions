@@ -22,7 +22,7 @@ import numpy as np
 def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
-    PREDICTION_TYPE = f"regular_prediction_10_6_4"
+    PREDICTION_TYPE = f"regular_prediction_12_6_4"
 
     parser = argparse.ArgumentParser(
         description='Predictions with different configurations.')
@@ -33,12 +33,24 @@ def predict(user_token):
     parser.add_argument('--ignore-timing', action='store_true',
                         help='Ignore timing data')
 
+    parser.add_argument('--from-date', type=str, help='From date')
+    parser.add_argument('--to-date', type=str, help='To date')
+
     args, extra_args = parser.parse_known_args()
     target = args.target
     ignore_timing = args.ignore_timing
 
+    from_date = args.from_date
+    to_date = args.to_date
+
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Timing ignored: {ignore_timing}\n")
+
+    # Calculate from_date and to_date
+    from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else datetime.today() + relativedelta(days=-30 * 6)
+    to_date = datetime.strptime(to_date, '%Y-%m-%d') if to_date else datetime.today() + relativedelta(days=7)
+
+    print(f"From & to date: {from_date}, {to_date}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
@@ -46,12 +58,6 @@ def predict(user_token):
 
     # Loop over competition IDs
     for i, COMPETITION_ID in enumerate(competition_ids):
-        # Calculate from_date and to_date
-        from_date = datetime.today()
-        from_date = datetime.strptime('2024-01-01', '%Y-%m-%d')
-
-        to_date = datetime.strptime('2024-04-14', '%Y-%m-%d')
-        # to_date = datetime.today() + relativedelta(days=7)
 
         compe_data = {}
         compe_data['id'] = COMPETITION_ID

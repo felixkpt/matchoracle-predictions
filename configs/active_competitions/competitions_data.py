@@ -5,53 +5,53 @@ from configs.settings import API_BASE_URL, basepath
 from app.helpers.functions import parse_json
 from datetime import datetime, timedelta
 
-COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?active_only=1&page=1&per_page=1000&order_direction=desc"
+COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?status=1&page=1&per_page=1000&order_direction=desc"
 
 
 def get_competition_ids(user_token):
-    directory = os.path.abspath(
-        os.path.join(basepath(), f"configs/active_competitions/saved/"))
+    directory = os.path.abspath(os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
 
     # Save the features
     filename = os.path.abspath(f"{directory}/competition_data.json")
 
     try:
-        # Read the JSON file
-        with open(filename, 'r') as json_file:
-            competition_data = json.load(json_file)
+        # Check if the saved file exists and if it's less than an 1 day old
+        if os.path.exists(filename):
+            # Load the saved data
+            with open(filename, 'r') as json_file:
+                saved_data = json.load(json_file)
+                saved_time = datetime.strptime(saved_data[0]["saved_at"], "%Y-%m-%d %H:%M:%S")
+                if datetime.now() - saved_time < timedelta(days=1):
+                    # Return the competition IDs from the saved data
+                    print('Retrived saved compe IDS.')
+                    return [competition["id"] for competition in saved_data]
 
-        # Extract competition IDs
-        competition_ids = [competition["id"]
-                           for competition in competition_data]
+        # Create a dictionary with the headers
+        headers = {"Authorization": f"Bearer {user_token}"}
 
-        return competition_ids
-    except (FileNotFoundError, json.JSONDecodeError):
-        try:
-            # Create a dictionary with the headers
-            headers = {
-                "Authorization": f"Bearer {user_token}",
-            }
+        # Make a GET request with the headers
+        response = requests.get(COMPETITION_API_URL, headers=headers)
+        response.raise_for_status()  # Raise an exception for bad responses (4xx and 5xx)
+        data = response.json()
 
-            # Make a GET request with the headers
-            response = requests.get(COMPETITION_API_URL, headers=headers)
-            response.raise_for_status()  # Raise an exception for bad responses (4xx and 5xx)
-            data = response.json()
+        # Get the current time
+        current_time = datetime.now()
 
-            competition_data = [{"id": competition["id"], "name": competition["name"]}
-                                for competition in data["results"]['data']]
+        competition_data = [{"id": competition["id"], "name": competition["name"], "saved_at": current_time.strftime("%Y-%m-%d %H:%M:%S")}
+                            for competition in data["results"]['data']]
 
-            # Save competition data to a JSON file
-            with open(filename, 'w') as json_file:
-                json.dump(competition_data, json_file)
+        # Save competition data to a JSON file
+        with open(filename, 'w') as json_file:
+            json.dump(competition_data, json_file)
+        
+        # Return the competition IDs after saving to the file
+        print('Retrived compe IDS from backend.')
+        return [competition["id"] for competition in competition_data]
 
-            # Return the competition IDs after saving to the file
-            return [competition["id"] for competition in competition_data]
-
-        except requests.RequestException as e:
-            print(f"Error fetching competition data: {e}")
-            return []
-
+    except requests.RequestException as e:
+        print(f"Error fetching competition data: {e}")
+        return []
 
 def trained_competitions(user_token, compe_data):
     directory = os.path.abspath(
