@@ -35,7 +35,7 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
 
 
 def save_hyperparameters(compe_data, target, user_token):
-    print('Saving hyperparameters...')
+    print(f'Saving {target} hyperparameters...')
     id = compe_data['id']
     prediction_type = compe_data['prediction_type']
     best_params = compe_data['best_params']
@@ -101,6 +101,8 @@ def save_hyperparameters(compe_data, target, user_token):
     # Save the sorted data back to the JSON file
     with open(filename, 'w') as file:
         json.dump(sorted_hyperparameters, file, indent=4)
+    
+    print(f'Hyperparameters saved!\n')
 
     update_backend(user_token, id, target, main_object)
 

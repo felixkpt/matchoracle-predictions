@@ -41,7 +41,7 @@ def load_for_training(compe_data, user_token, be_params, per_page=2000, train_ra
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}&prediction_type={PREDICTION_TYPE}"
+        matches_url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}&prediction_type={PREDICTION_TYPE}&task=train"
 
         # Retrieve train and test match data
         all_matches = get(url=matches_url, user_token=user_token)
@@ -93,8 +93,16 @@ def get(url, user_token, filter=True):
 
     matches_data = []
     for match in all_matches:
-
-        stats = match['stats']
+        try:
+            if isinstance(match, dict):
+                stats = match['stats']
+            else:
+                raise TypeError("Expected 'match' to be a dictionary.")
+        except TypeError as e:
+            print(f"Error: {e}")
+            print("Problematic match:", match)
+            continue
+        
         if not stats:
             continue
 

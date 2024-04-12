@@ -9,7 +9,8 @@ COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?status=1&page=1&per_pa
 
 
 def get_competition_ids(user_token):
-    directory = os.path.abspath(os.path.join(basepath(), "configs/active_competitions/saved/"))
+    directory = os.path.abspath(os.path.join(
+        basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
 
     # Save the features
@@ -21,7 +22,8 @@ def get_competition_ids(user_token):
             # Load the saved data
             with open(filename, 'r') as json_file:
                 saved_data = json.load(json_file)
-                saved_time = datetime.strptime(saved_data[0]["saved_at"], "%Y-%m-%d %H:%M:%S")
+                saved_time = datetime.strptime(
+                    saved_data[0]["saved_at"], "%Y-%m-%d %H:%M:%S")
                 if datetime.now() - saved_time < timedelta(days=1):
                     # Return the competition IDs from the saved data
                     print('Retrived saved compe IDS.')
@@ -44,7 +46,7 @@ def get_competition_ids(user_token):
         # Save competition data to a JSON file
         with open(filename, 'w') as json_file:
             json.dump(competition_data, json_file)
-        
+
         # Return the competition IDs after saving to the file
         print('Retrived compe IDS from backend.')
         return [competition["id"] for competition in competition_data]
@@ -53,7 +55,8 @@ def get_competition_ids(user_token):
         print(f"Error fetching competition data: {e}")
         return []
 
-def trained_competitions(user_token, compe_data):
+
+def trained_competitions(user_token, compe_data, train_matches_counts):
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -70,7 +73,12 @@ def trained_competitions(user_token, compe_data):
     id = compe_data['id']
 
     current_datetime = datetime.today()
-    now = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+
+    now = None if train_matches_counts < 10 else current_datetime.strftime(
+        '%Y-%m-%d %H:%M:%S')
+
+    if now is None:
+        compe_data['trained_to'] = None
 
     # Check if the competition ID already exists in the trained competition data
     if id in trained_compe_data:

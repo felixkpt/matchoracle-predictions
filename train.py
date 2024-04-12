@@ -38,8 +38,8 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     competition_ids = [
         args.competition] if args.competition is not None else get_competition_ids(user_token)
 
-    trained_competition_ids = [] if ignore_trained is not None else get_trained_competitions()
-
+    trained_competition_ids = [] if ignore_trained or args.competition else get_trained_competitions()
+    
     # Starting points for loops
     start_from = [12, 6, 4]
     end_at = [12, 6, 4]
