@@ -68,11 +68,10 @@ def predict(user_token):
 
         Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
 
-        # Loop through each day from from_date to to_date
-        current_date = from_date
-        while current_date <= to_date:
-            # Your code for processing each day goes here
-            target_date = current_date.strftime("%Y-%m-%d")
+        dates = get_dates_with_games(user_token, COMPETITION_ID, from_date.strftime("%Y-%m-%d"), to_date.strftime("%Y-%m-%d"))
+       
+       # Loop through each day from from_date to to_date
+        for target_date in dates:
             Logger.info(f"Competition: {COMPETITION_ID}")
             Logger.info(f"Date: {target_date}\n")
 
@@ -107,9 +106,6 @@ def predict(user_token):
                     print('One of the required preds is null.')
 
             print(f"______________\n")
-
-            # Move to the next day
-            current_date += relativedelta(days=1)
 
         print(f"--- End preds for compe #{COMPETITION_ID} ---\n")
 
@@ -242,3 +238,29 @@ def storePredictions(data, user_token):
     message = response.json()['message']
 
     return message
+
+def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
+    # Now that you have the user token, you can use it for other API requests.
+    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/get-dates-with-games"
+
+    # Create a dictionary with the headers
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    data = {
+        'from_date': from_date,
+        'to_date': to_date,
+    }
+
+    json_data = json.dumps(data)
+    # Make a GET request with the headers
+    response = requests.get(url, data=json_data, headers=headers)
+    response.raise_for_status()
+
+    # Parse the JSON response
+    dates = response.json()['results']
+
+    return dates
+

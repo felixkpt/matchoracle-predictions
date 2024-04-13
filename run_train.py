@@ -43,7 +43,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
 
     if target is None or target == 'bts':
         trgt = 'bts_target'
-        outcomes = [0, 1, 2]
+        outcomes = [0, 1]
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         # set to false since be has been accessed by this point
