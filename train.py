@@ -47,7 +47,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
             arr.append(compe)
 
     print(f"Competitions info:")
-    print(f"Active: {len(competition_ids)}, to be trained: {len(arr)}, aleady trained: {len(competition_ids)-len(arr)}\n")
+    print(f"Active: {len(competition_ids)}, To be trained: {len(arr)}, Aleady trained: {len(competition_ids)-len(arr)}\n")
 
     competition_ids = arr
 
