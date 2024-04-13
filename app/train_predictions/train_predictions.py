@@ -132,6 +132,6 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
     print_preds_update_hyperparams(user_token, target, compe_data, preds,
                                    predict_proba, train_frame, test_frame, print_minimal=True)
 
-    print(f'***** END PREDICTS FOR {target} *****\n')
+    print(f'***** End preds target: {target} *****\n')
 
     return [preds, predict_proba, occurrences]

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?status=1&page=1&per_page=1000&order_direction=desc"
 
 
-def get_competition_ids(user_token):
+def get_competitions(user_token):
     directory = os.path.abspath(os.path.join(
         basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -27,7 +27,7 @@ def get_competition_ids(user_token):
                 if datetime.now() - saved_time < timedelta(days=1):
                     # Return the competition IDs from the saved data
                     print('Retrived saved compe IDS.')
-                    return [competition["id"] for competition in saved_data]
+                    return [{"id": competition["id"], "name": competition["name"]} for competition in saved_data]
 
         # Create a dictionary with the headers
         headers = {"Authorization": f"Bearer {user_token}"}
@@ -49,14 +49,14 @@ def get_competition_ids(user_token):
 
         # Return the competition IDs after saving to the file
         print('Retrived compe IDS from backend.')
-        return [competition["id"] for competition in competition_data]
+        return [{"id": competition["id"], "name": competition["name"]} for competition in competition_data]
 
     except requests.RequestException as e:
         print(f"Error fetching competition data: {e}")
         return []
 
 
-def trained_competitions(user_token, compe_data, train_matches_counts):
+def update_trained_competitions(user_token, compe_data, train_matches_counts):
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -71,6 +71,7 @@ def trained_competitions(user_token, compe_data, train_matches_counts):
         trained_compe_data = {}
 
     id = compe_data['id']
+    name = compe_data['name']
 
     current_datetime = datetime.today()
 
@@ -88,6 +89,7 @@ def trained_competitions(user_token, compe_data, train_matches_counts):
     else:
         # If the competition ID is not found, add a new entry with current timestamps
         trained_compe_data[id] = {
+            "name": name,
             "competition_trained_at": now,
             "last_predicted_at": None
         }
@@ -117,6 +119,7 @@ def update_last_predicted_at(compe_data):
 
     # Update the competition data with the current timestamp for last prediction
     trained_compe_data[id] = {
+        "name": trained_compe_data['name'],
         "competition_trained_at": trained_compe_data[id]['competition_trained_at'],
         "last_predicted_at": now
     }
