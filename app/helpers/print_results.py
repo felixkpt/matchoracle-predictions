@@ -9,7 +9,7 @@ def header(compe_data, preds):
     total_preds = len(preds)
 
     print(
-        f"\nBELOW ARE THE MODEL RESULTS FOR {compe_data['id']} ({total_preds} PREDS):\n")
+        f"--- Below are the model results for {compe_data['id']} ({total_preds} PREDS) ---")
 
     # Calculate the counts of each class label in the predictions
     class_counts = Counter(preds)
