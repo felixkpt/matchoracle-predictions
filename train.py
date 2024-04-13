@@ -14,7 +14,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     parser = argparse.ArgumentParser(
         description='Train predictions with different configurations.')
     parser.add_argument('--competition', type=int, help='Competition ID')
-    parser.add_argument('--target', choices=['hda', 'ft_hda', 'ht_hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
+    parser.add_argument('--target', choices=['hda', 'ft-hda', 'ht-hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
                         help='Target for predictions')
 
     parser.add_argument('--ignore-saved', action='store_true',
@@ -39,7 +39,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
         args.competition] if args.competition is not None else get_competition_ids(user_token)
 
     trained_competition_ids = [] if ignore_trained or args.competition else get_trained_competitions()
-    
+
     # Starting points for loops
     start_from = [12, 6, 4]
     end_at = [12, 6, 4]

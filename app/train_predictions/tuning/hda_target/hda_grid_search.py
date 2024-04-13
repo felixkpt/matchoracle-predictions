@@ -42,7 +42,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'max_features': [None]
     }
 
-    grid_search_n_splits = 2 if len(train_frame) < 30 else GRID_SEARCH_N_SPLITS
+    grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
     if not is_random_search:
         gridsearch = GridSearchCV(
