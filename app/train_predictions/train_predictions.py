@@ -27,7 +27,18 @@ np.random.seed(42)
 
 def train_predictions(user_token, train_matches, test_matches, compe_data, target, outcomes, is_grid_search=False, is_random_search=False, update_model=False):
 
-    Logger.info(f"Prediction Target: {target}")
+    total_matches = len(train_matches) + len(test_matches)
+
+    # Calculate the percentages
+    train_percentage = (
+        int(round((len(train_matches) / total_matches) * 100)) if total_matches > 0 else 0)
+    test_percentage = (
+        int(round((len(test_matches) / total_matches) * 100)) if total_matches > 0 else 0)
+
+    Logger.info(
+        f"Number of train matches: {len(train_matches)}, ({train_percentage})%")
+    Logger.info(
+        f"Number of test matches: {len(test_matches)}, ({test_percentage})%")
 
     features, has_features = get_features(compe_data, target)
     FEATURES = features
@@ -120,5 +131,7 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
 
     print_preds_update_hyperparams(user_token, target, compe_data, preds,
                                    predict_proba, train_frame, test_frame, print_minimal=True)
+
+    print(f'***** END PREDICTS FOR {target} *****\n')
 
     return [preds, predict_proba, occurrences]

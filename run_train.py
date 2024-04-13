@@ -7,7 +7,7 @@ from configs.active_competitions.competitions_data import trained_competitions
 def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_search):
 
     per_page = 800
-    print(f'Train/test max limit: {per_page}')
+    print(f'Train/test max limit: {per_page}\n')
 
     is_random_search = False
     update_model = True
@@ -19,7 +19,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         if total_matches == 0:
-            print('No matches to make predictions for {trgt}.\n')
+            print('Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -31,7 +31,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         
         if total_matches == 0:
-            print(f'No matches to make predictions for {trgt}.\n')
+            print(f'Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -42,7 +42,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         if total_matches == 0:
-            print(f'No matches to make predictions for {trgt}.\n')
+            print(f'Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -53,7 +53,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         if total_matches == 0:
-            print(f'No matches to make predictions for {trgt}.\n')
+            print(f'Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -64,7 +64,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         if total_matches == 0:
-            print(f'No matches to make predictions for {trgt}.\n')
+            print(f'Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -75,7 +75,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         if total_matches == 0:
-            print(f'No matches to make predictions for {trgt}.\n')
+            print(f'Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -86,7 +86,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
         train_matches, test_matches, total_matches = get_matches(
             user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved)
         if total_matches == 0:
-            print(f'No matches to make predictions for {trgt}.\n')
+            print(f'Aborting, no matches to make predictions for {trgt}.\n')
         else:
             train_predictions(user_token, train_matches, test_matches, compe_data, trgt, outcomes,
                           is_grid_search, is_random_search=is_random_search, update_model=update_model)
@@ -99,21 +99,12 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
 
 def get_matches(
         user_token, compe_data, target, be_params, per_page, train_ratio, ignore_saved):
+    Logger.info(f'***** START PREDICTS TARGET: {target} *****')
+
     # Load train and test data for all targets
     train_matches, test_matches = load_for_training(
         user_token, compe_data, target, be_params, per_page, train_ratio, ignore_saved)
 
     total_matches = len(train_matches) + len(test_matches)
-
-    # Calculate the percentages
-    train_percentage = (
-        int(round((len(train_matches) / total_matches) * 100)) if total_matches > 0 else 0)
-    test_percentage = (
-        int(round((len(test_matches) / total_matches) * 100)) if total_matches > 0 else 0)
-
-    Logger.info(
-        f"Number of train matches: {len(train_matches)}, ({train_percentage})%")
-    Logger.info(
-        f"Number of test matches: {len(test_matches)}, ({test_percentage})%")
 
     return train_matches, test_matches, total_matches
