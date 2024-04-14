@@ -4,6 +4,7 @@ import os
 from configs.settings import API_BASE_URL, basepath
 from app.helpers.functions import parse_json
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?status=1&page=1&per_page=1000&order_direction=desc"
 
@@ -26,7 +27,7 @@ def get_competitions(user_token):
                     saved_data[0]["saved_at"], "%Y-%m-%d %H:%M:%S")
                 if datetime.now() - saved_time < timedelta(days=1):
                     # Return the competition IDs from the saved data
-                    print('Retrived saved compe IDS.')
+                    print('Retrieving saved compe IDS.')
                     return [{"id": competition["id"], "name": competition["name"]} for competition in saved_data]
 
         # Create a dictionary with the headers
@@ -48,7 +49,7 @@ def get_competitions(user_token):
             json.dump(competition_data, json_file)
 
         # Return the competition IDs after saving to the file
-        print('Retrived compe IDS from backend.')
+        print('Retrieving compe IDS from backend.')
         return [{"id": competition["id"], "name": competition["name"]} for competition in competition_data]
 
     except requests.RequestException as e:
@@ -129,7 +130,17 @@ def update_last_predicted_at(compe_data):
         json.dump(trained_compe_data, file, indent=4)
 
 
-def get_trained_competitions(ignore_timimg=False):
+def get_trained_competitions(last_action_date=None, is_train=False):
+    """
+    Get trained competitions based on the last predicted date.
+
+    Args:
+        last_action_date (str, optional): Last training date in the format "%Y-%m-%d %H:%M:%S". Defaults to None but last 3 days will used internally.
+
+    Returns:
+        list: List of competition IDs.
+    """
+
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -143,18 +154,35 @@ def get_trained_competitions(ignore_timimg=False):
     except FileNotFoundError:
         trained_compe_data = {}
 
-    # Get the current time
-    current_time = datetime.now()
+    last_action_date = last_action_date if last_action_date is not None else (
+        datetime.today() + relativedelta(days=-3)).strftime("%Y-%m-%d %H:%M:%S")
 
-    # Filter out competitions with last_predicted_at less than 3 hours ago
-    filtered_competitions = {
-        competition_id: competition_info
-        for competition_id, competition_info in trained_compe_data.items()
-        if (
-            competition_info.get("last_predicted_at") is None
-            or current_time - datetime.strptime(competition_info["last_predicted_at"], "%Y-%m-%d %H:%M:%S") >= timedelta(hours=0 if ignore_timimg else 24 * 3)
-        )
-    }
+    # Filter out competitions based on timing
+    if is_train == True:
+
+        filtered_competitions = {
+            competition_id: competition_info
+            for competition_id, competition_info in trained_compe_data.items()
+            if (
+                competition_info["competition_trained_at"] is not None and
+                datetime.strptime(
+                    competition_info["competition_trained_at"], "%Y-%m-%d %H:%M:%S") >= datetime.strptime(last_action_date, "%Y-%m-%d %H:%M:%S")
+            )
+        }
+    else:
+        filtered_competitions = {
+            competition_id: competition_info
+            for competition_id, competition_info in trained_compe_data.items()
+            if (
+                # Check if competition_trained_at is available
+                competition_info.get("competition_trained_at") is not None and
+                (
+                    competition_info["last_predicted_at"] is None or
+                    datetime.strptime(
+                        competition_info["last_predicted_at"], "%Y-%m-%d %H:%M:%S") <= datetime.strptime(last_action_date, "%Y-%m-%d %H:%M:%S")
+                )
+            )
+        }
 
     # Sort the filtered competitions by last_predicted_at timestamp in descending order (newest first)
     # and put None values at the top (ascending order)

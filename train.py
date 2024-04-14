@@ -1,5 +1,5 @@
 from run_train import run_train
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from configs.active_competitions.competitions_data import get_competitions, get_trained_competitions
 import argparse
@@ -29,6 +29,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     target = args.target
     ignore_saved = args.ignore_saved
     is_grid_search = args.is_grid_search
+    # ignore_trained comes handly especially when the request is from API that handles there timings internally
     ignore_trained = args.ignore_trained
 
     print(f"Main Prediction Target: {target if target else 'all'}")
@@ -38,12 +39,19 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     competition_ids = [{"id": args.competition, "name": "N/A"}
                        ] if args.competition is not None else get_competitions(user_token)
 
-    trained_competition_ids = [
-    ] if ignore_trained or args.competition else get_trained_competitions()
+    # Set last_action_date to 7 days ago
+    last_action_date = (datetime.now() - timedelta(hours=24 * 3)
+                        ).strftime("%Y-%m-%d %H:%M:%S")
+
+    print(
+        f'Retrieving compe trained after {last_action_date}...' if ignore_saved is None else 'Previously trained check ignored.')
+
+    trained_competition_ids = [] if ignore_trained or args.competition else get_trained_competitions(
+        last_action_date, True)
 
     arr = []
     for compe in competition_ids:
-        if not trained_competition_ids or compe['id'] not in trained_competition_ids:
+        if len(trained_competition_ids) == 0 or compe['id'] not in trained_competition_ids:
             arr.append(compe)
 
     print(f"Competitions info:")

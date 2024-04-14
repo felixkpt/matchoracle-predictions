@@ -11,7 +11,7 @@ from app.predictions_normalizers.filter_scores_dict import filter_scores_dict
 
 def predictions_normalizer(prediction, compe_data):
     # Get occurrences from hyperparameters
-    occurrences = get_occurrences(compe_data, 'cs_target', 0.01)
+    occurrences = get_occurrences(compe_data, 'cs_target', 0.1)
 
     # Generating a list of dictionaries containing scores
     scores_dict = scores(occurrences)
@@ -87,6 +87,14 @@ def predictions_normalizer(prediction, compe_data):
 
     if ft_hda_pick == 1 and gg_proba > 45:
         bts_margin = bts_margin + 1
+
+    # reduce high home / away margins in case of high bts margin
+    if ft_home_margin >= 3 and bts_margin >= 2:
+        ft_home_margin -= 1
+        print('high ft_home_margin reduced due to high bts.')
+    if ft_away_margin >= 3 and bts_margin >= 2:
+        ft_away_margin -= 1
+        print('high ft_away_margin reduced due to high bts.')
 
     print('gg / bts_margin', gg_proba, bts_margin)
 

@@ -16,61 +16,74 @@ import argparse
 from configs.active_competitions.competitions_data import get_trained_competitions
 from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
 from configs.active_competitions.competitions_data import update_last_predicted_at
-import numpy as np
 
 
 def predict(user_token):
+    """
+    Function to predict match outcomes based on various configurations.
+
+    Args:
+        user_token (str): User token for authentication.
+
+    Returns:
+        None
+    """
+
     print("\n............... START PREDICTIONS ..................\n")
 
+    # Set the prediction type
     PREDICTION_TYPE = f"regular_prediction_12_6_4"
 
+    # Parse command line arguments
     parser = argparse.ArgumentParser(
         description='Predictions with different configurations.')
     parser.add_argument('--competition', type=int, help='Competition ID')
     parser.add_argument('--target', choices=['hda', 'ft_hda', 'ht_hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
                         help='Target for predictions')
-
-    parser.add_argument('--ignore-timing', action='store_true',
-                        help='Ignore timing data')
-
+    parser.add_argument('--ignore-timing',
+                        action='store_true', help='Ignore timing data')
     parser.add_argument('--from-date', type=str, help='From date')
     parser.add_argument('--to-date', type=str, help='To date')
+    parser.add_argument('--target-match', type=int, help='Match ID')
 
     args, extra_args = parser.parse_known_args()
     target = args.target
     ignore_timing = args.ignore_timing
-
     from_date = args.from_date
     to_date = args.to_date
+    target_match = args.target_match
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Timing ignored: {ignore_timing}\n")
 
     # Calculate from_date and to_date
-    from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else datetime.today() + relativedelta(days=-30 * 6)
-    to_date = datetime.strptime(to_date, '%Y-%m-%d') if to_date else datetime.today() + relativedelta(days=7)
+    from_date = datetime.strptime(
+        from_date, '%Y-%m-%d') if from_date else datetime.today() + relativedelta(days=-30 * 6)
+    to_date = datetime.strptime(
+        to_date, '%Y-%m-%d') if to_date else datetime.today() + relativedelta(days=7)
 
     print(f"From & to date: {from_date}, {to_date}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
-        args.competition] if args.competition is not None else get_trained_competitions(ignore_timing)
+        args.competition] if args.competition is not None else get_trained_competitions()
 
     # Loop over competition IDs
     for i, COMPETITION_ID in enumerate(competition_ids):
-
         compe_data = {}
         compe_data['id'] = COMPETITION_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
 
         Logger.info(
             f"{i+1}/{len(competition_ids)}. Competition: #{COMPETITION_ID}")
+        Logger.info(f"Prediction type: {PREDICTION_TYPE}")
 
-        Logger.info(f"Prediction type: {PREDICTION_TYPE}\n")
+        dates = get_dates_with_games(user_token, COMPETITION_ID, from_date.strftime(
+            "%Y-%m-%d"), to_date.strftime("%Y-%m-%d"))
 
-        dates = get_dates_with_games(user_token, COMPETITION_ID, from_date.strftime("%Y-%m-%d"), to_date.strftime("%Y-%m-%d"))
-       
-       # Loop through each day from from_date to to_date
+        print(f'Dates with games in selected range: {len(dates)}\n')
+
+        # Loop through each day from from_date to to_date
         for target_date in dates:
             Logger.info(f"Competition: {COMPETITION_ID}")
             Logger.info(f"Date: {target_date}\n")
@@ -85,20 +98,19 @@ def predict(user_token):
             else:
                 print(f'Predicting {total_matches} matches...')
 
+                # Get predictions for different outcomes
                 ft_hda_preds = ft_hda_predictions(matches, compe_data)
                 ht_hda_preds = ht_hda_predictions(matches, compe_data)
-
                 bts_preds = bts_predictions(matches, compe_data)
-
                 over15_preds = over15_predictions(matches, compe_data)
                 over25_preds = over25_predictions(matches, compe_data)
-
                 over35_preds = over35_predictions(matches, compe_data)
-
                 cs_preds = cs_predictions(matches, compe_data)
 
+                # Check if any of the required predictions is null
                 if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
-                    merge_and_store_predictions(user_token, compe_data, target_date, matches, ft_hda_preds, ht_hda_preds,
+                    # Merge and store predictions
+                    merge_and_store_predictions(user_token, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
                                                 bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
                     # Update last predicted competitions
                     update_last_predicted_at(compe_data)
@@ -112,25 +124,41 @@ def predict(user_token):
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
 
-def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft_hda_preds, ht_hda_preds,
+def merge_and_store_predictions(user_token, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
                                 bts_preds, over15_preds, over25_preds, over35_preds, cs_preds):
+    """
+    Merge predictions and store them.
+
+    Args:
+        user_token (str): User token for authentication.
+        compe_data (dict): Competition data.
+        target_date (str): Target date for predictions.
+        matches (list): List of matches.
+        ft_hda_preds (tuple): Full-time HDA predictions.
+        ht_hda_preds (tuple): Half-time HDA predictions.
+        bts_preds (tuple): Both teams to score predictions.
+        over15_preds (tuple): Over 1.5 goals predictions.
+        over25_preds (tuple): Over 2.5 goals predictions.
+        over35_preds (tuple): Over 3.5 goals predictions.
+        cs_preds (tuple): Correct score predictions.
+
+    Returns:
+        None
+    """
 
     ft_hda_preds, ft_hda_preds_proba = ft_hda_preds
     ht_hda_preds, ht_hda_preds_proba = ht_hda_preds
-
     bts_preds, bts_preds_proba = bts_preds
-
     over15_preds, over15_preds_proba = over15_preds
     over25_preds, over25_preds_proba = over25_preds
     over35_preds, over35_preds_proba = over35_preds
-
     cs_preds, cs_preds_proba = cs_preds
 
     predictions = []
     for i, match in enumerate(matches):
         print('Match ID:', match['id'])
-        # if 95631 != match['id']:
-        #     continue
+        if target_match and match['id'] != target_match:
+            continue
 
         ft_hda = str(ft_hda_preds[i])
         hda_proba = ft_hda_preds_proba[i]
@@ -145,7 +173,6 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
         ht_away_win_proba = None
         if ht_hda_preds_proba and len(ht_hda_preds_proba):
             try:
-                # print(ht_hda_preds_proba)
                 ht_hda = str(ht_hda_preds[i])
                 hda_proba = ht_hda_preds_proba[i]
                 ht_home_win_proba = hda_proba[0]
@@ -171,38 +198,31 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
 
         pred_obj = {
             'id': match['id'],
-
             'ft_hda_pick': ft_hda,
             'ft_home_win_proba': ft_home_win_proba,
             'ft_draw_proba': ft_draw_proba,
             'ft_away_win_proba': ft_away_win_proba,
-
             'ht_hda_pick': ht_hda,
             'ht_home_win_proba': ht_home_win_proba,
             'ht_draw_proba': ht_draw_proba,
             'ht_away_win_proba': ht_away_win_proba,
-
             'bts_pick': bts,
             'gg_proba': bts_proba[1],
             'ng_proba': bts_proba[0],
-
             'over_under15_pick': over15,
             'over15_proba': over15_proba[1],
             'under15_proba': over15_proba[0],
-
             'over_under25_pick': over25,
             'over25_proba': over25_proba[1],
             'under25_proba': over25_proba[0],
-
             'over_under35_pick': over35,
             'over35_proba': over35_proba[1],
             'under35_proba': over35_proba[0],
-
-            # cs will be updated in normalizer
             'cs': cs,
             'cs_proba': cs_proba,
         }
 
+        # Normalize predictions
         pred_obj = predictions_normalizer(pred_obj, compe_data)
         predictions.append(pred_obj)
 
@@ -211,7 +231,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
         'type': compe_data['prediction_type'],
         'competition_id': compe_data['id'],
         'date': str(target_date),
-        'predictions': predictions}
+        'predictions': predictions
+    }
 
     if len(data['predictions']) > 0:
         message = storePredictions(data, user_token)
@@ -219,18 +240,28 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ft
 
 
 def storePredictions(data, user_token):
+    """
+    Store predictions to the backend API.
 
-    # Now that you have the user token, you can use it for other API requests.
+    Args:
+        data (dict): Prediction data.
+        user_token (str): User token for authentication.
+
+    Returns:
+        str: Message indicating the success of the operation.
+    """
+
+    # Set the API endpoint URL
     url = f"{API_BASE_URL}/admin/predictions/from-python-app/store-predictions"
 
-    # Create a dictionary with the headers
+    # Set headers for the request
     headers = {
         "Authorization": f"Bearer {user_token}",
         'Content-Type': 'application/json',
     }
 
     json_data = json.dumps(data)
-    # Make a GET request with the headers
+    # Make a POST request to store predictions
     response = requests.post(url, data=json_data, headers=headers)
     response.raise_for_status()
 
@@ -239,23 +270,38 @@ def storePredictions(data, user_token):
 
     return message
 
+
 def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
-    # Now that you have the user token, you can use it for other API requests.
+    """
+    Fetch dates with games for a specific competition within a date range.
+
+    Args:
+        user_token (str): User token for authentication.
+        COMPETITION_ID (int): Competition ID.
+        from_date (str): Start date.
+        to_date (str): End date.
+
+    Returns:
+        list: List of dates with games.
+    """
+
+    # Set the API endpoint URL
     url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/get-dates-with-games"
 
-    # Create a dictionary with the headers
+    # Set headers for the request
     headers = {
         "Authorization": f"Bearer {user_token}",
         'Content-Type': 'application/json',
     }
 
+    # Prepare data for the request
     data = {
         'from_date': from_date,
         'to_date': to_date,
     }
 
     json_data = json.dumps(data)
-    # Make a GET request with the headers
+    # Make a GET request to fetch dates with games
     response = requests.get(url, data=json_data, headers=headers)
     response.raise_for_status()
 
@@ -263,4 +309,3 @@ def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
     dates = response.json()['results']
 
     return dates
-
