@@ -91,7 +91,7 @@ def filter_scores_dict(scores_dict, prediction, bts_margin, ft_hda_pick, over25_
     # Fallback to previous state if no scores remain
     scores_dict = scores_dict if len(scores_dict) > 0 else original_scores_dict
     original_scores_dict = scores_dict.copy()
-    print('SCORES DICT:::', scores_dict)
+    # print('SCORES DICT:::', scores_dict)
 
     # Filtering scores based on full-time away margin
     scores_dict = [

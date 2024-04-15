@@ -8,7 +8,7 @@ from app.predictions.over35_predictions import over35_predictions
 from app.predictions.cs_predictions import cs_predictions
 from app.matches.load_matches import load_for_predictions
 from configs.logger import Logger
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
 import requests
@@ -32,7 +32,7 @@ def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
     # Set the prediction type
-    PREDICTION_TYPE = f"regular_prediction_12_6_4"
+    PREDICTION_TYPE = f"regular_prediction_12_6_4_1200"
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(
@@ -40,21 +40,26 @@ def predict(user_token):
     parser.add_argument('--competition', type=int, help='Competition ID')
     parser.add_argument('--target', choices=['hda', 'ft_hda', 'ht_hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
                         help='Target for predictions')
-    parser.add_argument('--ignore-timing',
-                        action='store_true', help='Ignore timing data')
+    parser.add_argument('--last-predict-date', help='Last predict date')
+
     parser.add_argument('--from-date', type=str, help='From date')
     parser.add_argument('--to-date', type=str, help='To date')
     parser.add_argument('--target-match', type=int, help='Match ID')
 
     args, extra_args = parser.parse_known_args()
     target = args.target
-    ignore_timing = args.ignore_timing
+    last_action_date = args.last_predict_date
+
     from_date = args.from_date
     to_date = args.to_date
     target_match = args.target_match
 
     print(f"Main Prediction Target: {target if target else 'all'}")
-    print(f"Timing ignored: {ignore_timing}\n")
+
+    # Set last_action_date dynamically
+    last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 3)
+                                                                                            ).strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Performing preds on unpredicted competitions or those predicted on/before: {last_action_date}")
 
     # Calculate from_date and to_date
     from_date = datetime.strptime(
@@ -66,7 +71,7 @@ def predict(user_token):
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [
-        args.competition] if args.competition is not None else get_trained_competitions()
+        args.competition] if args.competition is not None else get_trained_competitions(last_action_date)
 
     # Loop over competition IDs
     for i, COMPETITION_ID in enumerate(competition_ids):

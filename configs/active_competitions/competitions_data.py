@@ -86,6 +86,7 @@ def update_trained_competitions(user_token, compe_data, train_matches_counts):
     if id in trained_compe_data:
         # Update only the competition training timestamp
         trained_compe_data[id]["competition_trained_at"] = now
+        trained_compe_data[id]["last_predicted_at"] = None
         do_update_trained_competition(user_token, compe_data)
     else:
         # If the competition ID is not found, add a new entry with current timestamps

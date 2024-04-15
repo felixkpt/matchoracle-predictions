@@ -24,13 +24,15 @@ def train(user_token, prediction_type=None, hyperparameters={}):
 
     parser.add_argument('--ignore-trained', action='store_true',
                         help='Ignore timing data')
-
+    parser.add_argument('--last-train-date', help='Last train date')
+ 
     args, extra_args = parser.parse_known_args()
     target = args.target
     ignore_saved = args.ignore_saved
     is_grid_search = args.is_grid_search
     # ignore_trained comes handly especially when the request is from API that handles there timings internally
     ignore_trained = args.ignore_trained
+    last_action_date = args.last_train_date
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Training to {TRAIN_TO_DATE}")
@@ -39,9 +41,10 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     competition_ids = [{"id": args.competition, "name": "N/A"}
                        ] if args.competition is not None else get_competitions(user_token)
 
-    # Set last_action_date to 7 days ago
-    last_action_date = (datetime.now() - timedelta(hours=24 * 3)
-                        ).strftime("%Y-%m-%d %H:%M:%S")
+    # Set last_action_date dynamically
+    last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 7)
+                                                                                            ).strftime("%Y-%m-%d %H:%M")
+    print(f"Performing train on untrained competitions or those trained on/before: {last_action_date}")
 
     print(
         f'Retrieving compe trained after {last_action_date}...' if ignore_saved is None else 'Previously trained check ignored.')
@@ -56,8 +59,12 @@ def train(user_token, prediction_type=None, hyperparameters={}):
 
     print(f"Competitions info:")
     print(f"Active: {len(competition_ids)}, To be trained: {len(arr)}, Aleady trained: {len(competition_ids)-len(arr)}\n")
-
+    
     competition_ids = arr
+
+    per_page = 1200
+
+    print(f'Train/test max limit: {per_page}\n')
 
     # Starting points for loops
     start_from = [12, 6, 4]
@@ -79,7 +86,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
                             # Generate prediction type based on loop parameters
                             PREDICTION_TYPE = (
                                 prediction_type
-                                or f"regular_prediction_{history_limit_per_match}_{current_ground_limit_per_match}_{h2h_limit_per_match}"
+                                or f"regular_prediction_{history_limit_per_match}_{current_ground_limit_per_match}_{h2h_limit_per_match}_{per_page}"
                             )
 
                             i = 0
@@ -106,7 +113,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
 
                                 # Run training for the current configuration
                                 run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
-                                          ignore_saved=ignore_saved, is_grid_search=is_grid_search)
+                                          ignore_saved=ignore_saved, is_grid_search=is_grid_search, per_page=per_page)
                                 print(
                                     f"***** END TRAIN PREDICTS FOR {COMPETITION_ID} *****\n")
 

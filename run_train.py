@@ -4,10 +4,7 @@ from app.train_predictions.train_predictions import train_predictions
 from configs.active_competitions.competitions_data import update_trained_competitions
 
 
-def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_search):
-
-    per_page = 800
-    print(f'Train/test max limit: {per_page}\n')
+def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_search, per_page):
 
     is_random_search = False
     update_model = True

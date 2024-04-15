@@ -160,7 +160,7 @@ def predictions_normalizer(prediction, compe_data):
                   over25_proba, over35_proba)
 
         # overs only
-        if best_match['over25'] == 0 and over25_proba <= 53 and gg_proba <= 55:
+        if best_match['over25'] == 0 and over25_proba >= 50 and over25_proba <= 53 and gg_proba <= 55:
             over25_proba = 49
             under25_proba = 51
             over_under25_pick = 0
@@ -168,8 +168,7 @@ def predictions_normalizer(prediction, compe_data):
             prediction['over25_proba'] = over25_proba
             prediction['under25_proba'] = under25_proba
             prediction['over_under25_pick'] = over_under25_pick
-            print('Normalized overs probas favor under', over25_proba,
-                  over25_proba, over35_proba)
+            print('Normalized over2 proba favor under', over25_proba)
 
         if best_match['over25'] == 1 and over25_proba <= 50 and (over25_proba >= 47 or (over25_proba >= 45 and gg_proba >= 50)):
             over25_proba = 51
@@ -179,8 +178,7 @@ def predictions_normalizer(prediction, compe_data):
             prediction['over25_proba'] = over25_proba
             prediction['under25_proba'] = under25_proba
             prediction['over_under25_pick'] = over_under25_pick
-            print('Normalized overs probas favor over CS', over25_proba,
-                  over25_proba, over35_proba)
+            print('Normalized over25 proba favor over25 b\'cause\'v CS', over25_proba)
 
     # Print the result of correct score
     print(f'CS RES: {cs} ({cs_echo})')
