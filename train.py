@@ -43,7 +43,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
 
     # Set last_action_date dynamically
     last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 7)
-                                                                                            ).strftime("%Y-%m-%d %H:%M")
+                                                                                            ).strftime("%Y-%m-%d %H:%M:%S")
     print(f"Performing train on untrained competitions or those trained on/before: {last_action_date}")
 
     print(
