@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?status=1&page=1&per_page=1000&order_direction=desc"
 
 
-def get_competitions(user_token):
+def get_competitions(user_token, games_counts_threshold=0):
     directory = os.path.abspath(os.path.join(
         basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -23,12 +23,19 @@ def get_competitions(user_token):
             # Load the saved data
             with open(filename, 'r') as json_file:
                 saved_data = json.load(json_file)
-                saved_time = datetime.strptime(
-                    saved_data[0]["saved_at"], "%Y-%m-%d %H:%M:%S")
-                if datetime.now() - saved_time < timedelta(days=1):
-                    # Return the competition IDs from the saved data
-                    print('Retrieving saved compe IDS.')
-                    return [{"id": competition["id"], "name": competition["name"]} for competition in saved_data]
+
+                if len(saved_data):
+                    saved_time = datetime.strptime(
+                        saved_data[0]["saved_at"], "%Y-%m-%d %H:%M:%S")
+                    if datetime.now() - saved_time < timedelta(days=1):
+                        # Return the competition IDs from the saved data
+                        print('Retrieving saved compe IDS.')
+
+                        filtered = []
+                        for c in saved_data:
+                            if c['games_counts'] >= games_counts_threshold:
+                                filtered.append(c)
+                        return filtered
 
         # Create a dictionary with the headers
         headers = {"Authorization": f"Bearer {user_token}"}
@@ -41,7 +48,7 @@ def get_competitions(user_token):
         # Get the current time
         current_time = datetime.now()
 
-        competition_data = [{"id": competition["id"], "name": competition["name"], "saved_at": current_time.strftime("%Y-%m-%d %H:%M:%S")}
+        competition_data = [{"id": competition["id"], "name": competition["country"]["name"]+' - '+competition["name"], "games_counts": competition["games_counts"], "saved_at": current_time.strftime("%Y-%m-%d %H:%M:%S")}
                             for competition in data["results"]['data']]
 
         # Save competition data to a JSON file
@@ -50,7 +57,13 @@ def get_competitions(user_token):
 
         # Return the competition IDs after saving to the file
         print('Retrieving compe IDS from backend.')
-        return [{"id": competition["id"], "name": competition["name"]} for competition in competition_data]
+
+        filtered = []
+        for c in competition_data:
+            if c['games_counts'] >= games_counts_threshold:
+                filtered.append(c)
+
+        return filtered
 
     except requests.RequestException as e:
         print(f"Error fetching competition data: {e}")

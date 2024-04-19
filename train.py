@@ -25,7 +25,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     parser.add_argument('--ignore-trained', action='store_true',
                         help='Ignore timing data')
     parser.add_argument('--last-train-date', help='Last train date')
- 
+
     args, extra_args = parser.parse_known_args()
     target = args.target
     ignore_saved = args.ignore_saved
@@ -37,17 +37,23 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Training to {TRAIN_TO_DATE}")
 
+    per_page = 1200
+
+    print(f'Train/test max limit: {per_page}\n')
+
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [{"id": args.competition, "name": "N/A"}
-                       ] if args.competition is not None else get_competitions(user_token)
+                       ] if args.competition is not None else get_competitions(user_token, per_page)
 
     # Set last_action_date dynamically
     last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 7)
-                                                                                            ).strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Performing train on untrained competitions or those trained on/before: {last_action_date}")
+                                                                              ).strftime("%Y-%m-%d %H:%M:%S")
+    print(
+        f"Performing train on untrained competitions or those trained on/before: {last_action_date}")
 
     print(
         f'Retrieving compe trained after {last_action_date}...' if ignore_saved is None else 'Previously trained check ignored.')
+
 
     trained_competition_ids = [] if ignore_trained or args.competition else get_trained_competitions(
         last_action_date, True)
@@ -57,14 +63,10 @@ def train(user_token, prediction_type=None, hyperparameters={}):
         if len(trained_competition_ids) == 0 or compe['id'] not in trained_competition_ids:
             arr.append(compe)
 
-    print(f"Competitions info:")
+    print(f"Competitions info (with >={per_page} matches):")
     print(f"Active: {len(competition_ids)}, To be trained: {len(arr)}, Aleady trained: {len(competition_ids)-len(arr)}\n")
-    
+
     competition_ids = arr
-
-    per_page = 1200
-
-    print(f'Train/test max limit: {per_page}\n')
 
     # Starting points for loops
     start_from = [12, 6, 4]
@@ -95,9 +97,12 @@ def train(user_token, prediction_type=None, hyperparameters={}):
                                 i += 1
                                 COMPETITION_ID = competition['id']
 
-                                compe_data = {'id': COMPETITION_ID,
-                                              'name': competition['name'],
-                                              'prediction_type': PREDICTION_TYPE}
+                                compe_data = {
+                                    'id': COMPETITION_ID,
+                                    'name': competition['name'],
+                                    "games_counts": competition['games_counts'],
+                                    'prediction_type': PREDICTION_TYPE
+                                }
                                 # Parameters for training
                                 be_params = {
                                     'history_limit_per_match': history_limit_per_match,
