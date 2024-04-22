@@ -37,7 +37,7 @@ def train(user_token, prediction_type=None, hyperparameters={}):
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Training to {TRAIN_TO_DATE}")
 
-    per_page = 1200
+    per_page = 1000
 
     print(f'Train/test max limit: {per_page}\n')
 

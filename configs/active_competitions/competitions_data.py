@@ -84,8 +84,9 @@ def update_trained_competitions(user_token, compe_data, train_matches_counts):
     except FileNotFoundError:
         trained_compe_data = {}
 
+    print('EEE', compe_data)
     id = compe_data['id']
-    name = compe_data['name']
+    games_counts = compe_data['games_counts']
 
     current_datetime = datetime.today()
 
@@ -104,7 +105,7 @@ def update_trained_competitions(user_token, compe_data, train_matches_counts):
     else:
         # If the competition ID is not found, add a new entry with current timestamps
         trained_compe_data[id] = {
-            "name": name,
+            "games_counts": games_counts,
             "competition_trained_at": now,
             "last_predicted_at": None
         }
@@ -129,13 +130,11 @@ def update_last_predicted_at(compe_data):
         trained_compe_data = {}
 
     id = compe_data['id']
-    name = compe_data['name'] if 'name' in compe_data else None
     current_datetime = datetime.today()
     now = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
     # Update the competition data with the current timestamp for last prediction
     trained_compe_data[id] = {
-        "name": name,
         "competition_trained_at": trained_compe_data[id]['competition_trained_at'],
         "last_predicted_at": now
     }

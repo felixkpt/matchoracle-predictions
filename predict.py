@@ -32,7 +32,7 @@ def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
     # Set the prediction type
-    PREDICTION_TYPE = f"regular_prediction_12_6_4_1200"
+    PREDICTION_TYPE = f"regular_prediction_12_6_4_1000"
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(
