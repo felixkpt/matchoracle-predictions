@@ -6,7 +6,7 @@ from app.helpers.functions import parse_json
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-COMPETITION_API_URL = f"{API_BASE_URL}/admin/competitions?status=1&page=1&per_page=1000&order_direction=desc"
+COMPETITION_API_URL = f"{API_BASE_URL}/dashboard/competitions?status=1&page=1&per_page=1000&order_direction=desc"
 
 
 def get_competitions(user_token, games_counts_threshold=0):
@@ -129,7 +129,7 @@ def update_last_predicted_at(compe_data):
     except FileNotFoundError:
         trained_compe_data = {}
 
-    id = compe_data['id']
+    id = int(compe_data['id'])
     current_datetime = datetime.today()
     now = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -196,19 +196,20 @@ def get_trained_competitions(last_action_date=None, is_train=False):
                 )
             )
         }
-
+    
+    sort_by = "competition_trained_at" if is_train else "last_predicted_at"
     # Sort the filtered competitions by last_predicted_at timestamp in descending order (newest first)
     # and put None values at the top (ascending order)
     sorted_filtered_competitions = dict(sorted(
         filtered_competitions.items(),
         key=lambda x: (
-            filtered_competitions[x[0]].get("last_predicted_at", "") is None,
-            filtered_competitions[x[0]].get("last_predicted_at", "")
+            filtered_competitions[x[0]].get(sort_by, "") is None,
+            filtered_competitions[x[0]].get(sort_by, "")
         ),
         reverse=True
     ))
 
-    return sorted_filtered_competitions.keys()
+    return sorted_filtered_competitions
 
 
 def do_update_trained_competition(user_token, compe_data):
@@ -223,7 +224,7 @@ def do_update_trained_competition(user_token, compe_data):
         "trained_to": compe_data['trained_to']
     })
 
-    url = f"{API_BASE_URL}/admin/predictions/from-python-app/update-competition-last-training"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/update-competition-last-training"
 
     response = requests.post(url, data=json_data, headers=headers)
     print(response.text)

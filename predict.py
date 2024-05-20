@@ -33,6 +33,7 @@ def predict(user_token):
 
     # Set the prediction type
     PREDICTION_TYPE = f"regular_prediction_12_6_4_1000"
+    VERSION = '1.0'
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(
@@ -58,43 +59,46 @@ def predict(user_token):
 
     # Set last_action_date dynamically
     last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 3)
-                                                                                            ).strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Performing preds on unpredicted competitions or those predicted on/before: {last_action_date}")
+                                                                              ).strftime("%Y-%m-%d %H:%M:%S")
+    print(
+        f"Performing preds on unpredicted competitions or those predicted on/before: {last_action_date}")
 
     # Calculate from_date and to_date
     from_date = datetime.strptime(
-        from_date, '%Y-%m-%d') if from_date else datetime.today() + relativedelta(days=-30 * 6)
+        from_date, '%Y-%m-%d') if from_date else datetime.today() + relativedelta(days=-30 * 0)
     to_date = datetime.strptime(
         to_date, '%Y-%m-%d') if to_date else datetime.today() + relativedelta(days=7)
 
     print(f"From & to date: {from_date}, {to_date}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
-    competition_ids = [
-        args.competition] if args.competition is not None else get_trained_competitions(last_action_date)
+    competitions = {
+        f"{args.competition}": {'id': args.competition, 'last_predicted_at': 'N/A'}
+    } if args.competition is not None else get_trained_competitions(last_action_date)
 
     # Loop over competition IDs
-    for i, COMPETITION_ID in enumerate(competition_ids):
+    for i, COMPETITION_ID in enumerate(competitions):
+
         compe_data = {}
         compe_data['id'] = COMPETITION_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
+        compe_data['version'] = VERSION
 
         Logger.info(
-            f"{i+1}/{len(competition_ids)}. Competition: #{COMPETITION_ID}")
+            f"{i+1}/{len(competitions)}. Competition: #{COMPETITION_ID}, (last pred. {competitions[COMPETITION_ID]['last_predicted_at']} )")
         Logger.info(f"Prediction type: {PREDICTION_TYPE}")
 
         dates = get_dates_with_games(user_token, COMPETITION_ID, from_date.strftime(
             "%Y-%m-%d"), to_date.strftime("%Y-%m-%d"))
 
-        print(f'Dates with games in selected range: {len(dates)}\n')
+        print(f'Dates with predictable games in selected range: {len(dates)}\n')
 
         # Loop through each day from from_date to to_date
         for target_date in dates:
             Logger.info(f"Competition: {COMPETITION_ID}")
             Logger.info(f"Date: {target_date}\n")
 
-            matches = load_for_predictions(
-                COMPETITION_ID, target_date, user_token)
+            matches = load_for_predictions(user_token, compe_data, target_date)
 
             total_matches = len(matches)
 
@@ -160,6 +164,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ta
     cs_preds, cs_preds_proba = cs_preds
 
     predictions = []
+    print(len(matches))
+
     for i, match in enumerate(matches):
         print('Match ID:', match['id'])
         if target_match and match['id'] != target_match:
@@ -232,8 +238,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ta
         predictions.append(pred_obj)
 
     data = {
-        'version': '1.0',
-        'type': compe_data['prediction_type'],
+        'prediction_type': compe_data['prediction_type'],
+        'version': compe_data['version'],
         'competition_id': compe_data['id'],
         'date': str(target_date),
         'predictions': predictions
@@ -257,7 +263,7 @@ def storePredictions(data, user_token):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/admin/predictions/from-python-app/store-predictions"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/store-predictions"
 
     # Set headers for the request
     headers = {
@@ -291,7 +297,7 @@ def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/admin/competitions/view/{COMPETITION_ID}/get-dates-with-games"
+    url = f"{API_BASE_URL}/dashboard/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
 
     # Set headers for the request
     headers = {
