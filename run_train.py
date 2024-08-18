@@ -11,6 +11,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
     train_ratio = .75
 
     if target is None or target == 'hda' or target == 'ft-hda':
+        print('Heeeeeey You!')
         trgt = 'ft_hda_target'
         outcomes = [0, 1, 2]
         train_matches, test_matches, total_matches = get_matches(
@@ -111,6 +112,7 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved, is_grid_s
     # Update trained competitions
     compe_data['trained_to'] = be_params['to_date'].strftime(
         '%Y-%m-%d %H:%M:%S')
+    compe_data['games_counts'] = total_matches
     update_trained_competitions(user_token, compe_data, len(train_matches))
 
 

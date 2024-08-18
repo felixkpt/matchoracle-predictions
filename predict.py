@@ -12,13 +12,12 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
 import requests
-import argparse
 from configs.active_competitions.competitions_data import get_trained_competitions
 from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
 from configs.active_competitions.competitions_data import update_last_predicted_at
 
 
-def predict(user_token):
+def predict(user_token, prediction_type, request_data):
     """
     Function to predict match outcomes based on various configurations.
 
@@ -32,36 +31,23 @@ def predict(user_token):
     print("\n............... START PREDICTIONS ..................\n")
 
     # Set the prediction type
-    PREDICTION_TYPE = f"regular_prediction_12_6_4_1000"
+    PREDICTION_TYPE = prediction_type
     VERSION = '1.0'
 
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description='Predictions with different configurations.')
-    parser.add_argument('--competition', type=int, help='Competition ID')
-    parser.add_argument('--target', choices=['hda', 'ft_hda', 'ht_hda', 'bts', 'over15', 'over25', 'over35', 'cs'],
-                        help='Target for predictions')
-    parser.add_argument('--last-predict-date', help='Last predict date')
-
-    parser.add_argument('--from-date', type=str, help='From date')
-    parser.add_argument('--to-date', type=str, help='To date')
-    parser.add_argument('--target-match', type=int, help='Match ID')
-
-    args, extra_args = parser.parse_known_args()
-    target = args.target
-    last_action_date = args.last_predict_date
-
-    from_date = args.from_date
-    to_date = args.to_date
-    target_match = args.target_match
+    # Extract parameters from request_data
+    competition_id = request_data.get('competition')
+    target = request_data.get('target')
+    last_action_date = request_data.get('last_predict_date')
+    from_date = request_data.get('from_date')
+    to_date = request_data.get('to_date')
+    target_match = request_data.get('target_match')
 
     print(f"Main Prediction Target: {target if target else 'all'}")
 
     # Set last_action_date dynamically
-    last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 3)
-                                                                              ).strftime("%Y-%m-%d %H:%M:%S")
-    print(
-        f"Performing preds on unpredicted competitions or those predicted on/before: {last_action_date}")
+    last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 3)).strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Performing preds on unpredicted competitions or those predicted on/before: {last_action_date}")
+
 
     # Calculate from_date and to_date
     from_date = datetime.strptime(
@@ -72,9 +58,7 @@ def predict(user_token):
     print(f"From & to date: {from_date}, {to_date}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
-    competitions = {
-        f"{args.competition}": {'id': args.competition, 'last_predicted_at': 'N/A'}
-    } if args.competition is not None else get_trained_competitions(last_action_date)
+    competitions = {f"{competition_id}": {'id': competition_id, 'last_predicted_at': 'N/A'}} if competition_id else get_trained_competitions(last_action_date)
 
     # Loop over competition IDs
     for i, COMPETITION_ID in enumerate(competitions):
