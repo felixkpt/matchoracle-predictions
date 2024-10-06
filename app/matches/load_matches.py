@@ -1,4 +1,4 @@
-from configs.settings import API_BASE_URL, basepath
+from app.configs.settings import API_BASE_URL, basepath
 from datetime import datetime
 import json
 import os
@@ -8,7 +8,7 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(user_token, compe_data, target, be_params, per_page=2000, train_ratio=.70, ignore_saved=False):
+def load_for_training(user_token, compe_data, target, be_params, per_page=2000, train_ratio=.70, ignore_saved_matches=False):
     COMPETITION_ID = compe_data.get('id')
     PREDICTION_TYPE = compe_data.get('prediction_type')
 
@@ -21,14 +21,14 @@ def load_for_training(user_token, compe_data, target, be_params, per_page=2000, 
     to_date_str = to_date.strftime("%Y-%m-%d")
 
     directory = os.path.abspath(
-        os.path.join(basepath(), "app/matches/saved/"))
+        os.path.join(basepath(), "matches/saved/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(os.path.join(
         directory, f"{COMPETITION_ID}_matches.json"))
 
     loaded_results = None
-    if not ignore_saved:
+    if not ignore_saved_matches:
         print(f"Getting saved matches...")
         try:
             # Try to load data from json file
@@ -37,7 +37,7 @@ def load_for_training(user_token, compe_data, target, be_params, per_page=2000, 
         except:
             FileNotFoundError
 
-    if ignore_saved or loaded_results is None:
+    if ignore_saved_matches or loaded_results is None:
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
@@ -92,6 +92,8 @@ def get(url, user_token, filter=True):
     # Create a dictionary with the headers
     headers = {
         "Authorization": f"Bearer {user_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
 
     # Make a GET request with the headers

@@ -2,7 +2,7 @@ from sklearn.metrics import accuracy_score, precision_score, f1_score, matthews_
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from configs.settings import COMMON_FEATURES
+from app.configs.settings import COMMON_FEATURES
 import numpy as np
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 

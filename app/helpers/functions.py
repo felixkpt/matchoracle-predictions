@@ -4,8 +4,8 @@ import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, f1_score
 from sklearn.metrics import confusion_matrix as c_matrix
-from app.train_predictions.hyperparameters.hyperparameters import save_hyperparameters
-from configs.settings import COMMON_FEATURES, basepath
+from app.train_predictions.hyperparameters import save_hyperparameters
+from app.configs.settings import COMMON_FEATURES, basepath
 
 
 def natural_occurrences(possible_outcomes, train_frame, test_frame, target, print_output=True):

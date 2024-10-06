@@ -1,25 +1,33 @@
+from dateutil import parser
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from configs.active_competitions.competitions_data import get_competitions, get_trained_competitions
-from run_train import run_train
+from app.configs.active_competitions.competitions_data import get_competitions, get_trained_competitions
+from app.run_train import run_train
+import requests
+import json
+from app.configs.settings import API_BASE_URL
+
 
 # Calculate from_date and to_date
 TRAIN_TO_DATE = datetime.today() + relativedelta(days=-30 * 1)
 
-def train(user_token, prediction_type, request_data):
+async def train(user_token, prediction_type, request_data):
     print("\n............... START TRAIN PREDICTIONS ..................\n")
 
     # Extract values from request_data
     target = request_data.get('target')
-    ignore_saved = request_data.get('ignore_saved', False)
+    ignore_saved_matches = request_data.get('ignore_saved_matches', False)
     is_grid_search = request_data.get('is_grid_search', False)
     ignore_trained = request_data.get('ignore_trained', False)
-    last_action_date = request_data.get('last_train_date')
+    last_action_date = request_data.get('retrain_if_last_train_is_before')
+    if last_action_date:
+        last_action_date = parser.parse(last_action_date).strftime("%Y-%m-%d %H:%M:%S")
+
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Training to {TRAIN_TO_DATE}")
 
-    print(f'Train/test max limit: {request_data.get("per_page", 380)}\n')
+    print(f'Train/test max limit: {request_data.get("per_page", 1000)}\n')
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competition_ids = [{"id": request_data.get('competition'), "name": "N/A", "games_counts": 0}
@@ -28,15 +36,16 @@ def train(user_token, prediction_type, request_data):
     # Set last_action_date dynamically
     last_action_date = last_action_date if last_action_date is not None else (datetime.now() - timedelta(hours=24 * 7)
                                                                               ).strftime("%Y-%m-%d %H:%M:%S")
-    print(
-        f"Performing train on untrained competitions or those trained on/before: {last_action_date}")
+    
+    if ignore_trained:
+        print('Ignoring trained competitions...')
+    else: 
+        print(
+            f"Performing train on untrained competitions or those trained on/before: {last_action_date}")
 
-    print(
-        f'Retrieving compe trained after {last_action_date}...' if ignore_saved is None else 'Previously trained check ignored.')
-
-    trained_competition_ids = [] if ignore_trained or request_data.get('competition') else get_trained_competitions(
+    trained_competition_ids = [] if ignore_trained else get_trained_competitions(
         last_action_date, True)
-
+    
     arr = []
     for compe in competition_ids:
         if len(trained_competition_ids) == 0 or compe['id'] not in trained_competition_ids:
@@ -95,10 +104,52 @@ def train(user_token, prediction_type, request_data):
                                 print(
                                     f"***** START TRAIN PREDICTS FOR {COMPETITION_ID} *****")
 
+                                # Start the timer
+                                start_time = datetime.now()
+                                
                                 # Run training for the current configuration
                                 run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
-                                          ignore_saved=ignore_saved, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380))
+                                          ignore_saved_matches=ignore_saved_matches, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380))
+                                
+                                # End the timer
+                                end_time = datetime.now()
+                                duration = end_time - start_time
                                 print(
-                                    f"***** END TRAIN PREDICTS FOR {COMPETITION_ID} *****\n")
+                                    f"***** END TRAIN PREDICTS FOR {COMPETITION_ID} took {duration.total_seconds() / 60:.2f} minutes *****\n")
 
+    
+    job_id = request_data.get('job_id')
+    if job_id:
+        update_process_status(user_token, job_id, status="completed")
+    
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")
+
+def update_process_status(user_token, job_id, status="completed"):
+    """
+    Updates the process status for the given job_id.
+    :param user_token: Token for authorization.
+    :param job_id: ID of the process to update.
+    :param status: The new status to set (default: "completed").
+    :return: Response from the API.
+    """
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    payload = json.dumps({
+        "status": status
+    })
+
+    url = f"{API_BASE_URL}/dashboard/jobs/{job_id}/update-status"
+    
+    response = requests.patch(url, data=payload, headers=headers)
+    
+    if response.status_code == 200:
+        print(f"Job {job_id} status updated to '{status}'.")
+    else:
+        print(f"Failed to update status for job {job_id}. Response: {response.text}")
+
+    response.raise_for_status()
+
+    return response

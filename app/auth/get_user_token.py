@@ -1,5 +1,5 @@
 import requests
-from configs.settings import API_BASE_URL
+from app.configs.settings import API_BASE_URL
 
 
 def get_user_token(email, password):

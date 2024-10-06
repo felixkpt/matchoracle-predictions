@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from configs.settings import API_BASE_URL, basepath
+from app.configs.settings import API_BASE_URL, basepath
 from app.helpers.functions import parse_json
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -84,7 +84,7 @@ def update_trained_competitions(user_token, compe_data, train_matches_counts):
     except FileNotFoundError:
         trained_compe_data = {}
 
-    print('EEE', compe_data)
+    print('Updating trained:', compe_data)
     id = compe_data['id']
     games_counts = compe_data['games_counts']
 

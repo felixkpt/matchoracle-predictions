@@ -1,5 +1,5 @@
 import pandas as pd
-from configs.logger import Logger
+from app.configs.logger import Logger
 from app.predictions_normalizers.hda_normalizer import normalizer
 from app.helpers.functions import get_model, get_features
 from app.helpers.print_results import print_preds_update_hyperparams

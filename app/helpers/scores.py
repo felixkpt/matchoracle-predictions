@@ -1,14 +1,13 @@
 import os
 import json
-from configs.settings import API_BASE_URL, basepath
-
+from app.configs.settings import basepath
 
 def scores(occurrences=None, ignore=None):
     
     occurrences = [int(key) for key in occurrences.keys()]
-
+    
     filename = os.path.abspath(os.path.join(
-        basepath(), "app/helpers/scores.json"))
+        basepath(), "helpers/scores.json"))
 
     scores_list = []
 
@@ -24,6 +23,7 @@ def scores(occurrences=None, ignore=None):
                 scores_list = raw_scores
 
     except FileNotFoundError:
+        print('Scores file not found.')
         scores_list = []
 
     return scores_list

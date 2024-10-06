@@ -1,4 +1,4 @@
-from configs.settings import API_BASE_URL
+from app.configs.settings import API_BASE_URL
 from app.predictions.ft_hda_predictions import ft_hda_predictions
 from app.predictions.ht_hda_predictions import ht_hda_predictions
 from app.predictions.bts_predictions import bts_predictions
@@ -7,17 +7,18 @@ from app.predictions.over25_predictions import over25_predictions
 from app.predictions.over35_predictions import over35_predictions
 from app.predictions.cs_predictions import cs_predictions
 from app.matches.load_matches import load_for_predictions
-from configs.logger import Logger
+from app.configs.logger import Logger
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
 import requests
-from configs.active_competitions.competitions_data import get_trained_competitions
+from app.configs.active_competitions.competitions_data import get_trained_competitions
 from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
-from configs.active_competitions.competitions_data import update_last_predicted_at
+from app.configs.active_competitions.competitions_data import update_last_predicted_at
+from dateutil import parser
 
 
-def predict(user_token, prediction_type, request_data):
+async def predict(user_token, prediction_type, request_data):
     """
     Function to predict match outcomes based on various configurations.
 
@@ -50,11 +51,9 @@ def predict(user_token, prediction_type, request_data):
 
 
     # Calculate from_date and to_date
-    from_date = datetime.strptime(
-        from_date, '%Y-%m-%d') if from_date else datetime.today() + relativedelta(days=-30 * 0)
-    to_date = datetime.strptime(
-        to_date, '%Y-%m-%d') if to_date else datetime.today() + relativedelta(days=7)
-
+    from_date = parser.parse(from_date) if from_date else datetime.today() + relativedelta(days=-30 * 0)
+    to_date = parser.parse(to_date) if to_date else datetime.today() + relativedelta(days=7)
+    
     print(f"From & to date: {from_date}, {to_date}\n")
 
     # If competition_id is provided, use it; otherwise, fetch from the backend API

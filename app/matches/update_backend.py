@@ -1,4 +1,4 @@
-from configs.settings import API_BASE_URL
+from app.configs.settings import API_BASE_URL
 import json
 import requests
 
