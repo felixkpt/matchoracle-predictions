@@ -5,7 +5,7 @@ from app.metrics import metrics
 from app.auth.get_user_token import get_user_token
 from app.configs.settings import EMAIL, PASSWORD
 from app.configs.logger import Logger
-from app.requests.prediction_request import TrainRequest, PredictParams
+from app.requests.prediction_request import TrainRequest, PredictRequest
 import asyncio
 
 app = FastAPI()
@@ -46,7 +46,7 @@ async def train_model(request: TrainRequest):
     return {"message": "Training started in the background"}
 
 @app.post("/predict")
-async def predict_model(request: PredictParams):
+async def predict_model(request: PredictRequest):
     user_token = get_user_token_or_404()
     Logger.info("User token obtained successfully.")
 

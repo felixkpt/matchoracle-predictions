@@ -3,9 +3,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from app.configs.active_competitions.competitions_data import get_competitions, get_trained_competitions
 from app.run_train import run_train
-import requests
-import json
-from app.configs.settings import API_BASE_URL
+from app.configs.active_competitions.competitions_data import update_job_status
 
 
 # Calculate from_date and to_date
@@ -109,7 +107,7 @@ async def train(user_token, prediction_type, request_data):
                                 
                                 # Run training for the current configuration
                                 run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
-                                          ignore_saved_matches=ignore_saved_matches, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380))
+                                          ignore_saved_matches=ignore_saved_matches, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380), start_time=start_time)
                                 
                                 # End the timer
                                 end_time = datetime.now()
@@ -120,36 +118,7 @@ async def train(user_token, prediction_type, request_data):
     
     job_id = request_data.get('job_id')
     if job_id:
-        update_process_status(user_token, job_id, status="completed")
+        update_job_status(user_token, job_id, status="completed")
     
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")
 
-def update_process_status(user_token, job_id, status="completed"):
-    """
-    Updates the process status for the given job_id.
-    :param user_token: Token for authorization.
-    :param job_id: ID of the process to update.
-    :param status: The new status to set (default: "completed").
-    :return: Response from the API.
-    """
-    headers = {
-        "Authorization": f"Bearer {user_token}",
-        'Content-Type': 'application/json',
-    }
-
-    payload = json.dumps({
-        "status": status
-    })
-
-    url = f"{API_BASE_URL}/dashboard/jobs/{job_id}/update-status"
-    
-    response = requests.patch(url, data=payload, headers=headers)
-    
-    if response.status_code == 200:
-        print(f"Job {job_id} status updated to '{status}'.")
-    else:
-        print(f"Failed to update status for job {job_id}. Response: {response.text}")
-
-    response.raise_for_status()
-
-    return response

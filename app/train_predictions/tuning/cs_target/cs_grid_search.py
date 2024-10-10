@@ -5,7 +5,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSea
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
 import numpy as np
 from itertools import product
-from configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VARBOSE
+from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VARBOSE
 
 # Set a random seed for reproducibility
 np.random.seed(42)

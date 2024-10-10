@@ -1,4 +1,4 @@
-from configs.settings import API_BASE_URL, basepath
+from app.configs.settings import basepath
 import numpy as np
 import os
 import json
@@ -49,7 +49,7 @@ def save_hyperparameters(compe_data, target, user_token):
 
     # Load existing hyperparameters data
     directory = os.path.abspath(
-        os.path.join(basepath(), f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/"))
+        os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(f"{directory}/{target}_hyperparams.json")
@@ -119,7 +119,7 @@ def get_hyperparameters(compe_data, target, outcomes=None):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            os.path.join(basepath(), f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
+            os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
 
         try:
             with open(filename, 'r') as file:
@@ -154,7 +154,7 @@ def get_occurrences(compe_data, target, min_threshold=0.0):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            os.path.join(basepath(), f"app/train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
+            os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
 
         try:
             with open(filename, 'r') as file:

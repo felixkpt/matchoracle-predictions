@@ -13,7 +13,7 @@ class TrainRequest(BaseModel):
     job_id: Optional[str] = None
 
 
-class PredictParams(BaseModel):
+class PredictRequest(BaseModel):
     competition: Optional[int] = None
     target: Optional[str] = None
     last_predict_date: Optional[str] = None

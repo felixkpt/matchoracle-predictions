@@ -70,7 +70,7 @@ def get_competitions(user_token, games_counts_threshold=0):
         return []
 
 
-def update_trained_competitions(user_token, compe_data, train_matches_counts):
+def update_trained_competitions(user_token, compe_data, train_matches_counts, start_time):
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -101,7 +101,7 @@ def update_trained_competitions(user_token, compe_data, train_matches_counts):
         # Update only the competition training timestamp
         trained_compe_data[id]["competition_trained_at"] = now
         trained_compe_data[id]["last_predicted_at"] = None
-        do_update_trained_competition(user_token, compe_data)
+        do_update_trained_competition(user_token, compe_data, train_matches_counts, start_time)
     else:
         # If the competition ID is not found, add a new entry with current timestamps
         trained_compe_data[id] = {
@@ -109,13 +109,13 @@ def update_trained_competitions(user_token, compe_data, train_matches_counts):
             "competition_trained_at": now,
             "last_predicted_at": None
         }
-        do_update_trained_competition(user_token, compe_data)
+        do_update_trained_competition(user_token, compe_data, train_matches_counts, start_time)
 
     with open(filename, 'w') as file:
         json.dump(trained_compe_data, file, indent=4)
 
 
-def update_last_predicted_at(compe_data):
+def update_last_predicted_at(user_token,compe_data):
     directory = os.path.abspath(
         os.path.join(basepath(), "configs/active_competitions/saved/"))
     os.makedirs(directory, exist_ok=True)
@@ -212,7 +212,33 @@ def get_trained_competitions(last_action_date=None, is_train=False):
     return sorted_filtered_competitions
 
 
-def do_update_trained_competition(user_token, compe_data):
+def do_update_trained_competition(user_token, compe_data, train_matches_counts, start_time):
+    # Create a dictionary with the headers
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    # End the timer
+    end_time = datetime.now()
+    duration = end_time - start_time
+    duration = f'{duration.total_seconds() / 60:.2f}'
+    json_data = json.dumps({
+        "competition_id": compe_data['id'],
+        "trained_to": compe_data['trained_to'],
+        "prediction_type": compe_data['prediction_type'],
+        "results": {"saved_updated": train_matches_counts},
+        "minutes_taken": duration,
+        "status": 200,
+    })
+
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/update-competition-last-training"
+
+    response = requests.post(url, data=json_data, headers=headers)
+    print(response.text)
+    response.raise_for_status()
+
+def do_update_predicted_competition(user_token, compe_data):
     # Create a dictionary with the headers
     headers = {
         "Authorization": f"Bearer {user_token}",
@@ -221,11 +247,43 @@ def do_update_trained_competition(user_token, compe_data):
 
     json_data = json.dumps({
         "competition_id": compe_data['id'],
-        "trained_to": compe_data['trained_to']
+        "prediction_type": compe_data['prediction_type'],
+        "results": {"saved_updated": len(compe_data['predictions'])},
+        "status": 200,
     })
 
-    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/update-competition-last-training"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/update-competition-last-prediction"
 
     response = requests.post(url, data=json_data, headers=headers)
     print(response.text)
     response.raise_for_status()
+
+def update_job_status(user_token, job_id, status="completed"):
+    """
+    Updates the job status for the given job_id.
+    :param user_token: Token for authorization.
+    :param job_id: ID of the job to update.
+    :param status: The new status to set (default: "completed").
+    :return: Response from the API.
+    """
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        'Content-Type': 'application/json',
+    }
+
+    payload = json.dumps({
+        "status": status
+    })
+
+    url = f"{API_BASE_URL}/dashboard/jobs/{job_id}/update-status"
+    
+    response = requests.patch(url, data=payload, headers=headers)
+    
+    if response.status_code == 200:
+        print(f"Job {job_id} status updated to '{status}'.")
+    else:
+        print(f"Failed to update status for job {job_id}. Response: {response.text}")
+
+    response.raise_for_status()
+
+    return response

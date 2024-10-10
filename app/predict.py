@@ -16,6 +16,8 @@ from app.configs.active_competitions.competitions_data import get_trained_compet
 from app.predictions_normalizers.predictions_normalizer import predictions_normalizer
 from app.configs.active_competitions.competitions_data import update_last_predicted_at
 from dateutil import parser
+from app.configs.active_competitions.competitions_data import update_job_status
+from app.configs.active_competitions.competitions_data import do_update_predicted_competition
 
 
 async def predict(user_token, prediction_type, request_data):
@@ -66,6 +68,7 @@ async def predict(user_token, prediction_type, request_data):
         compe_data['id'] = COMPETITION_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
         compe_data['version'] = VERSION
+        compe_data['predictions'] = []
 
         Logger.info(
             f"{i+1}/{len(competitions)}. Competition: #{COMPETITION_ID}, (last pred. {competitions[COMPETITION_ID]['last_predicted_at']} )")
@@ -75,7 +78,6 @@ async def predict(user_token, prediction_type, request_data):
             "%Y-%m-%d"), to_date.strftime("%Y-%m-%d"))
 
         print(f'Dates with predictable games in selected range: {len(dates)}\n')
-
         # Loop through each day from from_date to to_date
         for target_date in dates:
             Logger.info(f"Competition: {COMPETITION_ID}")
@@ -102,16 +104,24 @@ async def predict(user_token, prediction_type, request_data):
                 # Check if any of the required predictions is null
                 if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
                     # Merge and store predictions
-                    merge_and_store_predictions(user_token, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
+                    predictions = merge_and_store_predictions(user_token, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
                                                 bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
+                    compe_data['predictions'] = predictions
                     # Update last predicted competitions
-                    update_last_predicted_at(compe_data)
+                    update_last_predicted_at(user_token,compe_data)
                 else:
                     print('One of the required preds is null.')
 
             print(f"______________\n")
 
+        do_update_predicted_competition(user_token, compe_data)
         print(f"--- End preds for compe #{COMPETITION_ID} ---\n")
+
+
+    job_id = request_data.get('job_id')
+    print('job_id:', job_id)
+    if job_id:
+        update_job_status(user_token, job_id, status="completed")
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
@@ -231,6 +241,8 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ta
     if len(data['predictions']) > 0:
         message = storePredictions(data, user_token)
         print(message)
+    
+    return predictions
 
 
 def storePredictions(data, user_token):

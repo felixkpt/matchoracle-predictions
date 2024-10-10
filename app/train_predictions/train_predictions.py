@@ -1,6 +1,6 @@
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
-from configs.logger import Logger
+from app.configs.logger import Logger
 from app.helpers.functions import natural_occurrences, save_model, get_features, feature_importance
 from app.train_predictions.hyperparameters.hyperparameters import get_hyperparameters
 from app.helpers.print_results import print_preds_update_hyperparams
