@@ -11,9 +11,12 @@ def over35_predictions(matches, compe_data):
   
     Logger.info(f"Prediction Target: {target}")
 
-    features, has_features = get_features(compe_data, target)
-    FEATURES = features
-    print(f"Has filtered features: {'Yes' if has_features else 'No'}")
+    FEATURES, has_features = get_features(compe_data, target)
+
+    # If there are no valid features, return None
+    if not has_features:
+        Logger.error("No filtered features found for predictions.")
+        return [None, None]
 
     # Create train and test DataFrames
     predict_frame = pd.DataFrame(matches)
