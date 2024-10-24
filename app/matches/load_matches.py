@@ -143,6 +143,7 @@ def add_features(all_matches):
             "date": date,
             "hour": hour,
             "day_of_week": day_of_week,
+            "season_id": match['season_id'] or 0
         }
 
         matches_data.append({**match, **current_match_data})

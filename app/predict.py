@@ -78,6 +78,9 @@ async def predict(user_token, prediction_type, request_data):
             "%Y-%m-%d"), to_date.strftime("%Y-%m-%d"))
 
         print(f'Dates with predictable games in selected range: {len(dates)}\n')
+        # Start the timer
+        start_time = datetime.now()
+
         # Loop through each day from from_date to to_date
         for target_date in dates:
             Logger.info(f"Competition: {COMPETITION_ID}")
@@ -93,13 +96,21 @@ async def predict(user_token, prediction_type, request_data):
                 print(f'Predicting {total_matches} matches...')
 
                 # Get predictions for different outcomes
-                ft_hda_preds = ft_hda_predictions(matches, compe_data)
-                ht_hda_preds = ht_hda_predictions(matches, compe_data)
-                bts_preds = bts_predictions(matches, compe_data)
-                over15_preds = over15_predictions(matches, compe_data)
-                over25_preds = over25_predictions(matches, compe_data)
-                over35_preds = over35_predictions(matches, compe_data)
-                cs_preds = cs_predictions(matches, compe_data)
+                ft_hda_preds = ht_hda_preds = bts_preds = over15_preds= over25_preds = over35_preds = cs_preds = [None, None]
+                if target is None or target == 'hda' or target == 'ft-hda':
+                    ft_hda_preds = ft_hda_predictions(matches, compe_data)
+                if target is None or target == 'ht-hda':
+                    ht_hda_preds = ht_hda_predictions(matches, compe_data)
+                if target is None or target == 'bts':
+                    bts_preds = bts_predictions(matches, compe_data)
+                if target is None or target == 'over15':
+                    over15_preds = over15_predictions(matches, compe_data)
+                if target is None or target == 'over25':
+                    over25_preds = over25_predictions(matches, compe_data)
+                if target is None or target == 'over35':
+                    over35_preds = over35_predictions(matches, compe_data)
+                if target is None or target == 'cs':
+                    cs_preds = cs_predictions(matches, compe_data)
 
                 # Check if any of the required predictions is null
                 if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
@@ -114,7 +125,8 @@ async def predict(user_token, prediction_type, request_data):
 
             print(f"______________\n")
 
-        do_update_predicted_competition(user_token, compe_data)
+        do_update_predicted_competition(user_token, compe_data, start_time)
+        
         print(f"--- End preds for compe #{COMPETITION_ID} ---\n")
 
 
