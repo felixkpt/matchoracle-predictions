@@ -8,7 +8,7 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(user_token, compe_data, target, be_params, per_page=2000, train_ratio=.70, ignore_saved_matches=False):
+def load_for_training(user_token, compe_data, be_params, per_page=2000, ignore_saved_matches=False):
     COMPETITION_ID = compe_data.get('id')
     PREDICTION_TYPE = compe_data.get('prediction_type')
 
@@ -54,23 +54,13 @@ def load_for_training(user_token, compe_data, target, be_params, per_page=2000, 
         # Data found in json file, use it
         all_matches = loaded_results
 
-    if target == 'ht_hda_target':
-        all_matches = [m for m in all_matches if m['ht_hda_target'] >= 0]
-
     all_matches = add_features(all_matches)
     total_matches = len(all_matches)
 
     if total_matches < 50:
         all_matches = []
 
-    train_size = int(total_matches * train_ratio)
-
-    # Split matches into train and test sets
-    train_matches = all_matches[:train_size]
-    test_matches = all_matches[train_size:]
-
-    return train_matches, test_matches
-
+    return all_matches
 
 def load_for_predictions(user_token, compe_data, TARGET_DATE):
     COMPETITION_ID = compe_data.get('id')

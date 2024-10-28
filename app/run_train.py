@@ -8,17 +8,14 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
     is_random_search = False
     update_model = True
     train_ratio = .75
-    train_matches = []
-    total_matches = 0
 
+    train_matches, test_matches, total_matches = get_matches(
+            user_token, compe_data, be_params, per_page, train_ratio, ignore_saved_matches)
 
     if target is None or target == 'hda' or target == 'ft-hda':
         trgt = 'ft_hda_target'
+        print(f'***** Start preds target: {target} *****')
         outcomes = [0, 1, 2]
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -28,11 +25,10 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
 
     if target is None or target == 'ht-hda':
         trgt = 'ht_hda_target'
+        print(f'***** Start preds target: {target} *****')
+        all_matches = [m for m in all_matches if m['ht_hda_target'] >= 0]
         outcomes = [0, 1, 2]
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
+
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -42,11 +38,8 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
 
     if target is None or target == 'bts':
         trgt = 'bts_target'
+        print(f'***** Start preds target: {target} *****')
         outcomes = [0, 1]
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -56,11 +49,8 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
 
     if target is None or target == 'over15':
         trgt = 'over15_target'
+        print(f'***** Start preds target: {target} *****')
         outcomes = [0, 1]
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -70,11 +60,8 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
 
     if target is None or target == 'over25':
         trgt = 'over25_target'
+        print(f'***** Start preds target: {target} *****')
         outcomes = [0, 1]
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -84,11 +71,8 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
 
     if target is None or target == 'over35':
         trgt = 'over35_target'
+        print(f'***** Start preds target: {target} *****')
         outcomes = [0, 1]
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -98,11 +82,8 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
 
     if target is None or target == 'cs':
         trgt = 'cs_target'
+        print(f'***** Start preds target: {target} *****')
         outcomes = range(0, 121)
-        train_matches, test_matches, total_matches = get_matches(
-            user_token, compe_data, trgt, be_params, per_page, train_ratio, ignore_saved_matches)
-        # set to false since be has been accessed by this point
-        ignore_saved_matches = False
 
         if total_matches == 0:
             print(f'Aborting, no matches to make predictions for {trgt}.\n')
@@ -118,14 +99,17 @@ def run_train(user_token, compe_data, target, be_params, ignore_saved_matches, i
         update_trained_competitions(user_token, compe_data, len(train_matches), start_time)
 
 
-def get_matches(
-        user_token, compe_data, target, be_params, per_page, train_ratio, ignore_saved_matches):
-    print(f'***** Start preds target: {target} *****')
+def get_matches(user_token, compe_data, be_params, per_page, train_ratio, ignore_saved_matches):
 
     # Load train and test data for all targets
-    train_matches, test_matches = load_for_training(
-        user_token, compe_data, target, be_params, per_page, train_ratio, ignore_saved_matches)
+    all_matches = load_for_training(user_token, compe_data, be_params, per_page, ignore_saved_matches)
 
-    total_matches = len(train_matches) + len(test_matches)
+    total_matches = len(all_matches)
+    train_size = int(total_matches * train_ratio)
+
+    # Split matches into train and test sets
+    train_matches = all_matches[:train_size]
+    test_matches = all_matches[train_size:]
+
 
     return train_matches, test_matches, total_matches
