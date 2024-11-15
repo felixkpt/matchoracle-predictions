@@ -119,6 +119,8 @@ def confusion_matrix(test_frame, target, preds):
 
 
 def feature_importance(model, compe_data, target, FEATURES, show=True, threshold=0.009):
+    print(f'Filtering feature_importance... {len(FEATURES)}')
+
     feature_importance = model.feature_importances_
 
     if show:
@@ -167,8 +169,8 @@ def get_features(compe_data, target):
             FileNotFoundError
 
         # Get the hyperparameters for compe id
-        features = features_data
-        has_features = True
+        features = features_data if len(features_data) > 0 else features
+        has_features = len(features) > 0
 
     except:
         KeyError

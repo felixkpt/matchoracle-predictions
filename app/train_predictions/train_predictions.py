@@ -62,6 +62,46 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
     model = RandomForestClassifier(**hyper_params)
 
     best_params = None
+ 
+    # List of features to inspect
+    # features_to_inspect = [
+    #     'ht_home_team_totals',
+    #     'ht_home_team_wins',
+    #     'ht_home_team_draws',
+    #     'ht_home_team_loses',
+    #     'ht_home_team_goals_for',
+    #     'ht_home_team_goals_for_avg',
+    #     'ht_home_team_goals_against',
+    #     'ht_home_team_goals_against_avg',
+    #     'ht_home_team_bts_games',
+    #     'ht_home_team_over15_games',
+    #     'ht_home_team_over25_games',
+    #     'ht_home_team_over35_games',
+    #     'ht_away_team_totals',
+    #     'ht_away_team_wins',
+    #     'ht_away_team_draws',
+    #     'ht_away_team_loses',
+    #     'ht_away_team_goals_for',
+    #     'ht_away_team_goals_for_avg',
+    #     'ht_away_team_goals_against',
+    #     'ht_away_team_goals_against_avg',
+    #     'ht_away_team_bts_games',
+    #     'ht_away_team_over15_games',
+    #     'ht_away_team_over25_games',
+    #     'ht_away_team_over35_games',
+    # ]
+
+    # # Inspect features for each match in train_matches
+    # for i, match in enumerate(train_matches):
+    #     print(f"Match {i+1}:")
+    #     for feature in features_to_inspect:
+    #         # Check if the feature exists in the match dictionary
+    #         feature_value = match.get(feature, "Not Found")
+    #         print(f"  {feature}: {feature_value}")
+    #     print("\n")  # Separate each match's output for clarity
+
+    # return
+
     if is_grid_search or not has_weights:
         is_grid_search = True
         if target == 'ft_hda_target' or target == 'ht_hda_target':
@@ -79,8 +119,10 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
         else:
             grid_search_function = None  # Default grid search function
 
+
         # should handle case when is_grid_search is True and grid_search_function is missing
         if grid_search_function:
+            print('Grid search function: ', grid_search_function)
             best_params = grid_search_function(
                 model, train_frame, FEATURES, target, occurrences, is_random_search)
 
@@ -89,12 +131,16 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
 
     Logger.info(
         f"Hyper Params {'(default)' if not has_weights else ''}: {hyper_params}\n")
+    
+    if len(FEATURES) == 0: return f'No features for {target}'
 
+    
     model.fit(train_frame[FEATURES], train_frame[target])
 
-    FEATURES = feature_importance(
-        model, compe_data, target, FEATURES, False, 0.008)
 
+    FEATURES = feature_importance(
+            model, compe_data, target, FEATURES, False, 0.008)
+    
     # Save model if update_model is set
     if update_model:
         save_model(model, train_frame, test_frame,
@@ -135,3 +181,13 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
     print(f'***** End preds target: {target} *****\n')
 
     return [preds, predict_proba, occurrences]
+
+def check_missing_values(dataframe, features, target):
+    features_missing = dataframe[features].isnull().sum()
+    target_missing = dataframe[target].isnull().sum()
+    
+    print("Features missing values:")
+    print(features_missing[features_missing > 0] if features_missing.sum() > 0 else "No missing values in features.")
+    
+    print("\nTarget missing values:")
+    print(f"{target_missing} missing values." if target_missing > 0 else "No missing values in target.")
