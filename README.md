@@ -97,7 +97,7 @@ This endpoint generates predictions for match outcomes based on the trained mode
 ```
 
 ### GET /metrics
-This endpoint retrieves the metrics for a specific model or prediction.
+This endpoint retrieves the metrics for a specific model or prediction, this is handy during initial app models setup.
 
 #### Response
 ```json
