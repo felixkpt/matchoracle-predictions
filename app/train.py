@@ -14,7 +14,7 @@ async def train(user_token, prediction_type, request_data):
 
     # Extract values from request_data
     target = request_data.get('target')
-    ignore_saved_matches = request_data.get('ignore_saved_matches', False)
+    prefer_saved_matches = request_data.get('prefer_saved_matches', True)
     is_grid_search = request_data.get('is_grid_search', False)
     ignore_trained = request_data.get('ignore_trained', False)
     last_action_date = request_data.get('retrain_if_last_train_is_before')
@@ -107,7 +107,7 @@ async def train(user_token, prediction_type, request_data):
                                 
                                 # Run training for the current configuration
                                 run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
-                                          ignore_saved_matches=ignore_saved_matches, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380), start_time=start_time)
+                                          prefer_saved_matches=prefer_saved_matches, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380), start_time=start_time)
                                 
                                 # End the timer
                                 end_time = datetime.now()

@@ -1,0 +1,185 @@
+.
+├── app
+│   ├── auth
+│   │   ├── get_user_token.py
+│   │   └── __pycache__
+│   │       └── get_user_token.cpython-39.pyc
+│   ├── configs
+│   │   ├── active_competitions
+│   │   │   ├── competitions_data.py
+│   │   │   ├── .gitignore
+│   │   │   ├── __pycache__
+│   │   │   │   └── competitions_data.cpython-39.pyc
+│   │   │   └── saved
+│   │   │       ├── competition_data.json
+│   │   │       └── trained_competitions.json
+│   │   ├── .gitignore
+│   │   ├── important_features
+│   │   │   ├── regular_prediction_12_6_4_1000
+│   │   ├── __init__.py
+│   │   ├── logger.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-39.pyc
+│   │   │   ├── logger.cpython-39.pyc
+│   │   │   └── settings.cpython-39.pyc
+│   │   └── settings.py
+│   ├── .gitignore
+│   ├── helpers
+│   │   ├── composer.py
+│   │   ├── functions.py
+│   │   ├── grid_search.py
+│   │   ├── __init__.py
+│   │   ├── print_results.py
+│   │   ├── __pycache__
+│   │   │   ├── functions.cpython-39.pyc
+│   │   │   ├── __init__.cpython-39.pyc
+│   │   │   ├── print_results.cpython-39.pyc
+│   │   │   └── scores.cpython-39.pyc
+│   │   ├── scores.json
+│   │   └── scores.py
+│   ├── __init__.py
+│   ├── main.py
+│   ├── matches
+│   │   ├── entry.py
+│   │   ├── .gitignore
+│   │   ├── load_matches.py
+│   │   ├── __pycache__
+│   │   │   ├── load_matches.cpython-39.pyc
+│   │   │   └── update_backend.cpython-39.pyc
+│   │   ├── saved
+│   │   │   ├── 1662_matches.json
+│   │   │   ├── 1671_matches.json
+│   │   │   ├── 1697_matches.json
+│   │   │   ├── 1699_matches.json
+│   │   │   └── 1701_matches.json
+│   │   └── update_backend.py
+│   ├── metrics.py
+│   ├── model_metrics.py
+│   ├── predictions
+│   │   ├── bts_predictions.py
+│   │   ├── cs_predictions.py
+│   │   ├── ft_hda_predictions.py
+│   │   ├── ht_hda_predictions.py
+│   │   ├── over15_predictions.py
+│   │   ├── over25_predictions.py
+│   │   ├── over35_predictions.py
+│   │   └── __pycache__
+│   │       ├── bts_predictions.cpython-39.pyc
+│   │       ├── cs_predictions.cpython-39.pyc
+│   │       ├── ft_hda_predictions.cpython-39.pyc
+│   │       ├── ht_hda_predictions.cpython-39.pyc
+│   │       ├── over15_predictions.cpython-39.pyc
+│   │       ├── over25_predictions.cpython-39.pyc
+│   │       └── over35_predictions.cpython-39.pyc
+│   ├── predictions_normalizers
+│   │   ├── bts_normalizer.py
+│   │   ├── cs_normalizer.py
+│   │   ├── filter_scores_dict.py
+│   │   ├── hda_normalizer.py
+│   │   ├── over_normalizer.py
+│   │   ├── predictions_normalizer.py
+│   │   └── __pycache__
+│   │       ├── bts_normalizer.cpython-39.pyc
+│   │       ├── cs_normalizer.cpython-39.pyc
+│   │       ├── filter_scores_dict.cpython-39.pyc
+│   │       ├── hda_normalizer.cpython-39.pyc
+│   │       ├── over_normalizer.cpython-39.pyc
+│   │       └── predictions_normalizer.cpython-39.pyc
+│   ├── predict.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-39.pyc
+│   │   ├── main.cpython-39.pyc
+│   │   ├── metrics.cpython-39.pyc
+│   │   ├── predict.cpython-39.pyc
+│   │   ├── run_train.cpython-39.pyc
+│   │   └── train.cpython-39.pyc
+│   ├── requests
+│   │   ├── __init__.py
+│   │   ├── prediction_request.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-39.pyc
+│   │       └── prediction_request.cpython-39.pyc
+│   ├── run_train.py
+│   ├── trained_models
+│   │   └── regular_prediction_12_6_4_1000
+│   │       ├── 1100
+│   │       │   ├── bts_target_model.joblib
+│   │       │   ├── cs_target_model.joblib
+│   │       │   ├── ft_hda_target_model.joblib
+│   │       │   ├── ht_hda_target_model.joblib
+│   │       │   ├── over15_target_model.joblib
+│   │       │   ├── over25_target_model.joblib
+│   │       │   └── over35_target_model.joblib
+│   │       ├── 1101
+
+│   │       └── 1754
+│   │           ├── bts_target_model.joblib
+│   │           ├── cs_target_model.joblib
+│   │           ├── ft_hda_target_model.joblib
+│   │           ├── over15_target_model.joblib
+│   │           ├── over25_target_model.joblib
+│   │           └── over35_target_model.joblib
+│   ├── train_predictions
+│   │   ├── hyperparameters
+│   │   │   ├── .gitignore
+│   │   │   ├── hyperparameters.py
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── hyperparameters.cpython-39.pyc
+│   │   │   │   └── __init__.cpython-39.pyc
+│   │   │   └── saved
+│   │   │       └── regular_prediction_12_6_4_1000
+│   │   │           ├── bts_target_hyperparams.json
+│   │   │           ├── cs_target_hyperparams.json
+│   │   │           ├── ft_hda_target_hyperparams.json
+│   │   │           ├── ht_hda_target_hyperparams.json
+│   │   │           ├── over15_target_hyperparams.json
+│   │   │           ├── over25_target_hyperparams.json
+│   │   │           └── over35_target_hyperparams.json
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-39.pyc
+│   │   │   └── train_predictions.cpython-39.pyc
+│   │   ├── train_predictions.py
+│   │   └── tuning
+│   │       ├── bts_target
+│   │       │   ├── bts_grid_search.py
+│   │       │   ├── bts_tuning.py
+│   │       │   └── __pycache__
+│   │       │       └── bts_grid_search.cpython-39.pyc
+│   │       ├── cs_target
+│   │       │   ├── cs_grid_search.py
+│   │       │   ├── cs_tuning.py
+│   │       │   └── __pycache__
+│   │       │       └── cs_grid_search.cpython-39.pyc
+│   │       ├── hda_target
+│   │       │   ├── hda_grid_search.py
+│   │       │   ├── hda_tuning.py
+│   │       │   └── __pycache__
+│   │       │       └── hda_grid_search.cpython-39.pyc
+│   │       ├── __init__.py
+│   │       ├── over15_target
+│   │       │   ├── over15_grid_search.py
+│   │       │   ├── over15_tuning.py
+│   │       │   └── __pycache__
+│   │       │       └── over15_grid_search.cpython-39.pyc
+│   │       ├── over25_target
+│   │       │   ├── over25_grid_search.py
+│   │       │   ├── over25_tuning.py
+│   │       │   └── __pycache__
+│   │       │       └── over25_grid_search.cpython-39.pyc
+│   │       ├── over35_target
+│   │       │   ├── over35_grid_search.py
+│   │       │   ├── over35_tuning.py
+│   │       │   └── __pycache__
+│   │       │       └── over35_grid_search.cpython-39.pyc
+│   │       └── __pycache__
+│   │           └── __init__.cpython-39.pyc
+│   └── train.py
+├── .env
+├── .env.example
+├── .gitignore
+├── __init__.py
+├── project_structure.txt
+├── requirements.txt
+└── startup.sh

@@ -8,7 +8,7 @@ import requests
 # Function to load data for all targets
 
 
-def load_for_training(user_token, compe_data, be_params, per_page=2000, ignore_saved_matches=False):
+def load_for_training(user_token, compe_data, be_params, per_page=2000, prefer_saved_matches=True):
     COMPETITION_ID = compe_data.get('id')
     PREDICTION_TYPE = compe_data.get('prediction_type')
 
@@ -28,7 +28,7 @@ def load_for_training(user_token, compe_data, be_params, per_page=2000, ignore_s
         directory, f"{COMPETITION_ID}_matches.json"))
 
     loaded_results = None
-    if not ignore_saved_matches:
+    if prefer_saved_matches:
         print(f"Getting saved matches...")
         try:
             # Try to load data from json file
@@ -37,7 +37,7 @@ def load_for_training(user_token, compe_data, be_params, per_page=2000, ignore_s
         except:
             FileNotFoundError
 
-    if ignore_saved_matches or loaded_results is None:
+    if not prefer_saved_matches or loaded_results is None:
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target

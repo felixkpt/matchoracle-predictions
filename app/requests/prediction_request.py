@@ -5,7 +5,7 @@ from typing import Optional
 class TrainRequest(BaseModel):
     competition: Optional[int] = None
     target: Optional[str] = None
-    ignore_saved_matches: Optional[bool] = False
+    prefer_saved_matches: Optional[bool] = False
     is_grid_search: Optional[bool] = False
     retrain_if_last_train_is_before: Optional[str] = None
     ignore_trained: Optional[bool] = False
