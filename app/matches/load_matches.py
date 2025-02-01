@@ -41,7 +41,7 @@ def load_for_training(user_token, compe_data, be_params, per_page=2000, prefer_s
         print(f"Getting matches with stats from BE...")
 
         # Construct the URL for train and test data for the current target
-        matches_url = f"{API_BASE_URL}/dashboard/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}&prediction_type={PREDICTION_TYPE}&task=train"
+        matches_url = f"{API_BASE_URL}/competitions/view/{COMPETITION_ID}/matches?type=played&per_page={per_page}&to_date={to_date_str}&is_predictor=1&order_by=utc_date&order_direction=asc&history_limit_per_match={history_limit_per_match}&current_ground_limit_per_match={current_ground_limit_per_match}&h2h_limit_per_match={h2h_limit_per_match}&prediction_type={PREDICTION_TYPE}&task=train"
 
         print(matches_url)
         # Retrieve train and test match data
@@ -68,7 +68,7 @@ def load_for_predictions(user_token, compe_data, TARGET_DATE):
     VERSION = compe_data.get('version')
 
     # Now that you have the user token, you can use it for other API requests.
-    url = f"{API_BASE_URL}/dashboard/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={TARGET_DATE}&prediction_type={PREDICTION_TYPE}&version={VERSION}&is_predictor=1&task=predict"
+    url = f"{API_BASE_URL}/competitions/view/{COMPETITION_ID}/matches?per_page=50&date={TARGET_DATE}&prediction_type={PREDICTION_TYPE}&version={VERSION}&is_predictor=1&task=predict"
     
     matches_data = get(url=url, user_token=user_token, filter=False)
 

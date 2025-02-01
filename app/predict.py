@@ -270,7 +270,7 @@ def storePredictions(data, user_token):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/store-predictions"
+    url = f"{API_BASE_URL}/predictions/from-python-app/store-predictions"
 
     # Set headers for the request
     headers = {
@@ -304,7 +304,7 @@ def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/dashboard/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
+    url = f"{API_BASE_URL}/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
 
     # Set headers for the request
     headers = {
