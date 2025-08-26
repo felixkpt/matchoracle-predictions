@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  predictor1:
+    build: .
+    container_name: matchoracle-predictions
+    ports:
+      - "3075:3075"
+    volumes:
+      - .:/app  # Mount local code for live reload
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    external: true

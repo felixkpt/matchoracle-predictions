@@ -1,11 +1,15 @@
 import os
+from dotenv import load_dotenv
 
-EMAIL = "admin@example.com"
-PASSWORD = "admin@example.com"
+# Load .env file
+load_dotenv()
 
-API_BASE_URL = "http://matchoracle-be.local/api"
+EMAIL = os.getenv("APP_USER_EMAIL", "default@example.com")
+PASSWORD = os.getenv("APP_USER_PASSWORD", "changeme")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api")
 
-HISTORY_LIMITS = [7, 10, 12, 15]
+# Convert comma-separated values to list of ints
+HISTORY_LIMITS = list(map(int, os.getenv("HISTORY_LIMITS", "7,10,12,15").split(",")))
 
 # Define predictors used for training
 COMMON_FEATURES = [
@@ -123,13 +127,12 @@ COMMON_FEATURES = [
     'h2h_ht_away_team_over35_games',
 ]
 
-GRID_SEARCH_N_SPLITS = 3
-GRID_SEARCH_VARBOSE = 0
-TRAIN_VARBOSE = 0
+GRID_SEARCH_N_SPLITS = int(os.getenv("GRID_SEARCH_N_SPLITS", 3))
+GRID_SEARCH_VERBOSE = int(os.getenv("GRID_SEARCH_VERBOSE", 0))
+TRAIN_VERBOSE = int(os.getenv("TRAIN_VERBOSE", 0))
 
 
 def basepath():
-    # Get the part before "configs"
     current_directory = os.path.dirname(os.path.abspath(__file__))
     path_before_configs, configs_directory = os.path.split(current_directory)
     return path_before_configs

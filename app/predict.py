@@ -61,6 +61,10 @@ async def predict(user_token, prediction_type, request_data):
     # If competition_id is provided, use it; otherwise, fetch from the backend API
     competitions = {f"{competition_id}": {'id': competition_id, 'last_predicted_at': 'N/A'}} if competition_id else get_trained_competitions(last_action_date)
 
+    job_id = request_data.get('job_id')
+    if job_id:
+        update_job_status(user_token, job_id, status="started")
+
     # Loop over competition IDs
     for i, COMPETITION_ID in enumerate(competitions):
 
@@ -131,7 +135,6 @@ async def predict(user_token, prediction_type, request_data):
 
 
     job_id = request_data.get('job_id')
-    print('job_id:', job_id)
     if job_id:
         update_job_status(user_token, job_id, status="completed")
 
@@ -270,7 +273,7 @@ def storePredictions(data, user_token):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/predictions/from-python-app/store-predictions"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/store-predictions"
 
     # Set headers for the request
     headers = {
@@ -304,7 +307,7 @@ def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
+    url = f"{API_BASE_URL}/dashboard/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
 
     # Set headers for the request
     headers = {

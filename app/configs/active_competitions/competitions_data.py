@@ -6,7 +6,7 @@ from app.helpers.functions import parse_json
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-COMPETITION_API_URL = f"{API_BASE_URL}/competitions?status=1&page=1&per_page=1000&order_direction=desc"
+COMPETITION_API_URL = f"{API_BASE_URL}/dashboard/competitions?status=1&page=1&per_page=1000&order_direction=desc"
 
 
 def get_competitions(user_token, games_counts_threshold=0):
@@ -234,7 +234,7 @@ def do_update_trained_competition(user_token, compe_data, train_matches_counts, 
         "status": 200,
     })
 
-    url = f"{API_BASE_URL}/predictions/from-python-app/update-competition-last-training"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/update-competition-last-training"
 
     response = requests.post(url, data=json_data, headers=headers)
     print(response.text)
@@ -262,7 +262,7 @@ def do_update_predicted_competition(user_token, compe_data, start_time):
         "status": 200,
     })
 
-    url = f"{API_BASE_URL}/predictions/from-python-app/update-competition-last-prediction"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/update-competition-last-prediction"
 
     response = requests.post(url, data=json_data, headers=headers)
     print(response.text)
@@ -286,7 +286,7 @@ def update_job_status(user_token, job_id, status="completed"):
         "status": status
     })
 
-    url = f"{API_BASE_URL}/jobs/{job_id}/update-status"
+    url = f"{API_BASE_URL}/dashboard/jobs/{job_id}/update-status"
     
     response = requests.patch(url, data=payload, headers=headers)
     

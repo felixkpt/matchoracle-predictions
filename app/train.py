@@ -43,6 +43,10 @@ async def train(user_token, prediction_type, request_data):
 
     trained_competition_ids = [] if ignore_trained else get_trained_competitions(
         last_action_date, True)
+
+    job_id = request_data.get('job_id')
+    if job_id:
+        update_job_status(user_token, job_id, status="started")
     
     arr = []
     for compe in competition_ids:
