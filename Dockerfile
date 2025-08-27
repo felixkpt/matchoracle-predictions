@@ -7,8 +7,9 @@ WORKDIR /app
 # Install system deps (optional: good for building some Python packages)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
-
+    
 # Copy requirements
 COPY requirements.txt .
 
