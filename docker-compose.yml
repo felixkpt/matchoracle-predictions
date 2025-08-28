@@ -5,11 +5,18 @@ services:
     ports:
       - "3075:3075"
     volumes:
-      - .:/app  # Mount local code for live reload
+      - trained_models:/app/app/trained_models
+      - trained_configs:/app/app/configs
     environment:
       - PYTHONUNBUFFERED=1
     networks:
       - appnet
+    mem_limit: 8g     # max 8 GB RAM
+    cpus: 8           # limit to 8 CPUs
+
+volumes:
+  trained_models:
+  trained_configs:
 
 networks:
   appnet:

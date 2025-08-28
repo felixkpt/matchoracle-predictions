@@ -7,7 +7,7 @@ from app.configs.active_competitions.competitions_data import update_job_status
 
 
 # Calculate from_date and to_date
-TRAIN_TO_DATE = datetime.today() + relativedelta(days=-30 * 1)
+TRAIN_TO_DATE = datetime.today() + relativedelta(days=-30 * 6)
 
 async def train(user_token, prediction_type, request_data):
     print("\n............... START TRAIN PREDICTIONS ..................\n")

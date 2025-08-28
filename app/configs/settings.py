@@ -130,7 +130,7 @@ COMMON_FEATURES = [
 GRID_SEARCH_N_SPLITS = int(os.getenv("GRID_SEARCH_N_SPLITS", 3))
 GRID_SEARCH_VERBOSE = int(os.getenv("GRID_SEARCH_VERBOSE", 0))
 TRAIN_VERBOSE = int(os.getenv("TRAIN_VERBOSE", 0))
-
+TRAIN_MAX_CORES = int(os.getenv("TRAIN_MAX_CORES", -1))
 
 def basepath():
     current_directory = os.path.dirname(os.path.abspath(__file__))

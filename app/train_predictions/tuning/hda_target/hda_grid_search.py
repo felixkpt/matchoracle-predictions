@@ -4,7 +4,7 @@ import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
 import numpy as np
-from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE
+from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE, TRAIN_MAX_CORES
 
 # Set a random seed for reproducibility
 np.random.seed(42)
@@ -37,7 +37,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         'random_state': [1],
         'n_estimators': n_estimators,
         'min_samples_split': min_samples_split,
-        'class_weight': ['balanced'],
+        'class_weight': class_weight + ['balanced'],
         'min_samples_leaf': [4, 7],
         'max_features': [None]
     }
@@ -52,7 +52,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             verbose=GRID_SEARCH_VERBOSE,
-            n_jobs=-1,
+            n_jobs=TRAIN_MAX_CORES,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
         gridsearch = RandomizedSearchCV(
@@ -64,6 +64,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
                 estimator, X, y_true, occurrences),
             random_state=42,
             verbose=GRID_SEARCH_VERBOSE,
+            n_jobs=TRAIN_MAX_CORES,
         ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score
@@ -87,44 +88,33 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
 
 
 def scorer(estimator, X, y_true, occurrences):
-    occurance_outcome_0 = occurrences.get(0, 0)
-    occurance_outcome_1 = occurrences.get(1, 0)
-    occurance_outcome_2 = occurrences.get(2, 0)
-
-    # Assuming estimator is a RandomForestClassifier
     y_pred = estimator.predict(X)
 
-    # Calculate the proportions of predicted occurrences
+    # Natural score = how close predicted class distribution is to actual
     totals = len(X)
-    y_pred_0 = round(sum(1 for p in y_pred if p == 0) / totals * 100)
-    y_pred_1 = round(sum(1 for p in y_pred if p == 1) / totals * 100)
-    y_pred_2 = round(sum(1 for p in y_pred if p == 2) / totals * 100)
+    occ_0, occ_1, occ_2 = [occurrences.get(i, 0) for i in [0, 1, 2]]
+    pred_0 = round(sum(p == 0 for p in y_pred) / totals * 100)
+    pred_1 = round(sum(p == 1 for p in y_pred) / totals * 100)
+    pred_2 = round(sum(p == 2 for p in y_pred) / totals * 100)
 
-    # If none of the penalization conditions are met, return a combined score
-    # Calculate the absolute differences between predicted and actual occurrences
-    diff_outcome_0 = abs(y_pred_0 - occurance_outcome_0)
-    diff_outcome_1 = abs(y_pred_1 - occurance_outcome_1)
-    diff_outcome_2 = abs(y_pred_2 - occurance_outcome_2)
+    max_diff = max(abs(pred_0 - occ_0), abs(pred_1 - occ_1), abs(pred_2 - occ_2))
+    natural_score = max(0, 1 - (1.5 * max_diff / 100))
 
-    # Calculate a similarity score based on the differences
-    max_diff = max(diff_outcome_0, diff_outcome_1, diff_outcome_2)
-    natural_score = 1 - (1.5 * max_diff / 100)  # Normalize to [0, 1]
-    natural_score = natural_score if natural_score >= 0 else 0
+    # Standard metrics
+    precision = precision_score(y_true, y_pred, average='weighted', zero_division=0)
+    f1_macro = f1_score(y_true, y_pred, average='macro')
+    f1_weighted = f1_score(y_true, y_pred, average='weighted')
+    f1_draw = f1_score(y_true, y_pred, labels=[1], average='macro')
 
-    # print(f"NATURAL: 0: {occurance_outcome_0}, 1: {occurance_outcome_1}, 2: {occurance_outcome_2}")
-    # print(f"PREDICT: 0: {y_pred_0}, 1: {y_pred_1}, 2: {y_pred_2}")
-    # print(f"TOTALS: {totals}, Ntrl score: {round(natural_score, 3)}")
-
-    # Calculate other required scorers and combine
-    precision = precision_score(
-        y_true, y_pred, average='weighted', zero_division=0)
-
-    f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
-
-    combined_score = 0.3 * precision + 0.4 * f1 + 0.3 * natural_score
-
+    # Weighted combination
+    combined_score = (
+        0.25 * precision +
+        0.25 * natural_score +
+        0.2 * f1_macro +
+        0.15 * f1_weighted +
+        0.15 * f1_draw
+    )
     return combined_score
-
 
 def plot_grid_search_results(weigh_data):
     # Set up the plot

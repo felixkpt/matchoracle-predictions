@@ -2,7 +2,7 @@ from sklearn.metrics import accuracy_score, recall_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
 from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
 import numpy as np
-from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE
+from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE, TRAIN_MAX_CORES
 
 # Set a random seed for reproducibility
 np.random.seed(42)
@@ -48,7 +48,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             verbose=GRID_SEARCH_VERBOSE,
-            n_jobs=-1,
+            n_jobs=TRAIN_MAX_CORES,
         ).fit(train_frame[FEATURES], train_frame[target])
     else:
         gridsearch = RandomizedSearchCV(
@@ -60,6 +60,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
                 estimator, X, y_true, occurrences),
             random_state=42,
             verbose=GRID_SEARCH_VERBOSE,
+            n_jobs=TRAIN_MAX_CORES,
         ).fit(train_frame[FEATURES], train_frame[target])
 
     # Extract and print the best class weight and score
