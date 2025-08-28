@@ -6,7 +6,7 @@ services:
       - "3075:3075"
     volumes:
       - trained_models:/app/app/trained_models
-      - trained_configs:/app/app/configs
+      - trained_features:/app/app/configs/important_features
     environment:
       - PYTHONUNBUFFERED=1
     networks:
@@ -16,7 +16,7 @@ services:
 
 volumes:
   trained_models:
-  trained_configs:
+  trained_features:
 
 networks:
   appnet:
