@@ -33,6 +33,29 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
 
     return [n_estimators, min_samples_split, class_weight]
 
+def get_param_grid(model_type, n_estimators, min_samples_split, class_weight, max_feature):
+    if model_type in ["RandomForest", "ExtraTrees"]:
+        param_grid = {
+            "n_estimators": n_estimators,
+            "min_samples_split": min_samples_split,
+            "min_samples_leaf": [3, 5],
+            "class_weight": ["balanced", "balanced_subsample"],
+            "max_features": max_feature,
+        }
+    elif model_type in ["GradientBoosting", "HistGB"]:
+        param_grid = {
+            "learning_rate": [0.05, 0.1],
+            "max_depth": [3, 5],
+        }
+    elif model_type == "LogReg":
+        param_grid = {
+            "C": [0.01, 0.1, 1, 10],
+            "solver": ["saga"],
+            "max_iter": [1000, 2000],
+            "class_weight": ["balanced", None],
+        }
+
+    return param_grid
 
 def save_hyperparameters(compe_data, target, user_token):
     print(f'Saving {target} hyperparameters...')
@@ -77,6 +100,8 @@ def save_hyperparameters(compe_data, target, user_token):
         'to_date': to_date,
     }
 
+    print("hyperparameters_data",hyperparameters_data)
+    print("best_params",best_params)
     # Check if id already exists
     if id in hyperparameters_data:
         # If it exists, update only the 'updated_at' timestamp

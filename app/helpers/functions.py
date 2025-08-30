@@ -118,8 +118,58 @@ def confusion_matrix(test_frame, target, preds):
     print("\n")
 
 
+from sklearn.inspection import permutation_importance
+
 def feature_importance(model, compe_data, target, FEATURES, show=True, threshold=0.009):
-    print(f'Filtering feature_importance... {len(FEATURES)}')
+    # Try to use native tree-based importances; if unavailable, keep all features.
+    try:
+        feature_importance = model.feature_importances_
+    except AttributeError:
+        if show:
+            print("feature_importances_ not available for this model; keeping all FEATURES unchanged.")
+        best_features = list(FEATURES)
+
+        # Persist exactly as before
+        COMPETITION_ID = compe_data['id']
+        PREDICTION_TYPE = compe_data['prediction_type']
+
+        directory = os.path.abspath(os.path.join(
+            basepath(), f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/"
+        ))
+        os.makedirs(directory, exist_ok=True)
+
+        filename = os.path.abspath(f"{directory}/{target}_features.json")
+        with open(filename, 'w') as file:
+            json.dump(best_features, file, indent=4)
+
+        return best_features
+
+    if show:
+        print(feature_importance)
+
+    best_features = []
+    for i, val in enumerate(feature_importance):
+        if val > threshold:
+            best_features.append(FEATURES[i])
+
+    if show:
+        print(len(FEATURES), len(best_features), best_features)
+
+    COMPETITION_ID = compe_data['id']
+    PREDICTION_TYPE = compe_data['prediction_type']
+
+    directory = os.path.abspath(os.path.join(
+        basepath(), f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/"
+    ))
+    os.makedirs(directory, exist_ok=True)
+
+    filename = os.path.abspath(f"{directory}/{target}_features.json")
+    with open(filename, 'w') as file:
+        json.dump(best_features, file, indent=4)
+
+    return best_features
+
+def feature_importance_v1(model, compe_data, target, FEATURES, show=True, threshold=0.009):
 
     feature_importance = model.feature_importances_
 

@@ -1,4 +1,6 @@
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, HistGradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
 import pandas as pd
 from app.configs.logger import Logger
 from app.helpers.functions import natural_occurrences, save_model, get_features, feature_importance
@@ -8,7 +10,8 @@ import numpy as np
 
 # Import grid_search and normalizer
 # Grid search imports
-from app.train_predictions.tuning.hda_target.hda_grid_search import grid_search as hda_grid_search
+from app.train_predictions.tuning.hda_target.ft_hda_grid_search_v2 import grid_search as ft_hda_grid_search
+from app.train_predictions.tuning.hda_target.ht_hda_grid_search import grid_search as ht_hda_grid_search
 from app.train_predictions.tuning.bts_target.bts_grid_search import grid_search as bts_grid_search
 from app.train_predictions.tuning.over15_target.over15_grid_search import grid_search as over15_grid_search
 from app.train_predictions.tuning.over25_target.over25_grid_search import grid_search as over25_grid_search
@@ -25,7 +28,7 @@ from app.predictions_normalizers.cs_normalizer import normalizer as cs_normalize
 np.random.seed(42)
 
 
-def train_predictions(user_token, train_matches, test_matches, compe_data, target, outcomes, is_grid_search=False, is_random_search=False, update_model=False):
+def train_predictions(user_token, train_matches, test_matches, compe_data, target, outcomes, is_grid_search=False, is_random_search=False, update_model=False, model_type="LogReg"):
 
     total_matches = len(train_matches) + len(test_matches)
 
@@ -59,53 +62,27 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
     hyper_params, has_weights = get_hyperparameters(
         compe_data, target, outcomes)
 
-    model = RandomForestClassifier(**hyper_params)
+    if model_type == "RandomForest":
+        model = RandomForestClassifier()
+    elif model_type == "ExtraTrees":
+        model = ExtraTreesClassifier()
+    elif model_type == "GradientBoosting":
+        model = GradientBoostingClassifier()
+    elif model_type == "HistGB":
+        model = HistGradientBoostingClassifier()
+    elif model_type == "LogReg":
+        model = LogisticRegression()
+    else:
+        raise ValueError(f"Unknown model_type: {model_type}")
 
     best_params = None
- 
-    # List of features to inspect
-    # features_to_inspect = [
-    #     'ht_home_team_totals',
-    #     'ht_home_team_wins',
-    #     'ht_home_team_draws',
-    #     'ht_home_team_loses',
-    #     'ht_home_team_goals_for',
-    #     'ht_home_team_goals_for_avg',
-    #     'ht_home_team_goals_against',
-    #     'ht_home_team_goals_against_avg',
-    #     'ht_home_team_bts_games',
-    #     'ht_home_team_over15_games',
-    #     'ht_home_team_over25_games',
-    #     'ht_home_team_over35_games',
-    #     'ht_away_team_totals',
-    #     'ht_away_team_wins',
-    #     'ht_away_team_draws',
-    #     'ht_away_team_loses',
-    #     'ht_away_team_goals_for',
-    #     'ht_away_team_goals_for_avg',
-    #     'ht_away_team_goals_against',
-    #     'ht_away_team_goals_against_avg',
-    #     'ht_away_team_bts_games',
-    #     'ht_away_team_over15_games',
-    #     'ht_away_team_over25_games',
-    #     'ht_away_team_over35_games',
-    # ]
-
-    # # Inspect features for each match in train_matches
-    # for i, match in enumerate(train_matches):
-    #     print(f"Match {i+1}:")
-    #     for feature in features_to_inspect:
-    #         # Check if the feature exists in the match dictionary
-    #         feature_value = match.get(feature, "Not Found")
-    #         print(f"  {feature}: {feature_value}")
-    #     print("\n")  # Separate each match's output for clarity
-
-    # return
-
+     
     if is_grid_search or not has_weights:
         is_grid_search = True
-        if target == 'ft_hda_target' or target == 'ht_hda_target':
-            grid_search_function = hda_grid_search
+        if target == 'ft_hda_target':
+            grid_search_function = ft_hda_grid_search
+        elif target == 'ht_hda_target':
+            grid_search_function = ht_hda_grid_search
         elif target == 'bts_target':
             grid_search_function = bts_grid_search
         elif target == 'over15_target':
@@ -119,24 +96,25 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
         else:
             grid_search_function = None  # Default grid search function
 
-
         # should handle case when is_grid_search is True and grid_search_function is missing
         if grid_search_function:
-            print('Grid search function: ', grid_search_function)
-            best_params = grid_search_function(
-                model, train_frame, FEATURES, target, occurrences, is_random_search)
+            print('Model type: ', model_type)
+            grid_result = grid_search_function(
+                model, train_frame, FEATURES, target, occurrences, is_random_search, model_type)
 
+            best_params = grid_result["best_params"]
             hyper_params = best_params
+
+            # Apply only valid hyperparameters if you want to reuse model
+            hyper_params = {k: v for k, v in best_params.items() if k in model.get_params()}
             model.set_params(**hyper_params)
 
     Logger.info(
         f"Hyper Params {'(default)' if not has_weights else ''}: {hyper_params}\n")
     
     if len(FEATURES) == 0: return f'No features for {target}'
-
     
     model.fit(train_frame[FEATURES], train_frame[target])
-
 
     FEATURES = feature_importance(
             model, compe_data, target, FEATURES, False, 0.008)
@@ -175,12 +153,28 @@ def train_predictions(user_token, train_matches, test_matches, compe_data, targe
     compe_data['from_date'] = train_matches[0]['utc_date']
     compe_data['to_date'] = test_matches[-1]['utc_date']
 
-    print_preds_update_hyperparams(user_token, target, compe_data, preds,
+    print_preds_update_hyperparams(user_token, target, model_type, compe_data, preds,
                                    predict_proba, train_frame, test_frame, print_minimal=True)
 
-    print(f'***** End preds target: {target} *****\n')
+    print(f'***** End training for model: {model_type} *****\n')
 
-    return [preds, predict_proba, occurrences]
+    # F1 score on test set
+    f1 = f1_score(test_frame[target], preds, average='weighted')  # or 'macro' as needed
+
+    # Include features used and the fitted model itself
+    return {
+        "model": model,
+        "preds": preds,
+        "predict_proba": predict_proba,
+        "train_frame": train_frame,
+        "test_frame": test_frame,
+        "occurrences": occurrences,
+        "features": FEATURES,
+        "f1": f1,
+        "best_params": best_params,
+        "best_score": grid_result["best_score"] if 'grid_result' in locals() else None,
+        "cv_results": grid_result["cv_results"] if 'grid_result' in locals() else None,
+    }
 
 def check_missing_values(dataframe, features, target):
     features_missing = dataframe[features].isnull().sum()

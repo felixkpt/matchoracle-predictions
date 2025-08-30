@@ -1,6 +1,6 @@
 from sklearn.metrics import accuracy_score, recall_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
-from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
+from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, get_param_grid
 import numpy as np
 from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE, TRAIN_MAX_CORES
 
@@ -8,7 +8,7 @@ from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE, TRAI
 np.random.seed(42)
 
 
-def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False):
+def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False, model_type="RandomForest"):
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
@@ -29,14 +29,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         if x[0] < 2 and x[1] < 2:
             class_weight.append(x)
 
-    # Creating a dictionary grid for grid search
-    param_grid = {
-        'random_state': [1],
-        'n_estimators': n_estimators,
-        'min_samples_split': min_samples_split,
-        'min_samples_leaf': [3, 5],
-        'class_weight': ['balanced'],
-    }
+    # Get dictionary grid for grid search
+    param_grid = get_param_grid(model_type, n_estimators, min_samples_split, class_weight=['balanced', 'balanced_subsample'], max_feature=[None, 'sqrt'])
 
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
@@ -69,7 +63,12 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    return best_params
+    return {
+        "best_estimator": gridsearch.best_estimator_,   # fitted model
+        "best_params": best_params,                     # dict of best hyperparameters
+        "best_score": best_score,                       # best CV score
+        "cv_results": gridsearch.cv_results_,           # full results from all runs
+    }
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({

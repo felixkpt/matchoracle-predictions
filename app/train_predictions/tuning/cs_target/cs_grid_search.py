@@ -2,7 +2,7 @@ from sklearn.metrics import f1_score, precision_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, RandomizedSearchCV
-from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator
+from app.train_predictions.hyperparameters.hyperparameters import hyperparameters_array_generator, get_param_grid
 import numpy as np
 from itertools import product
 from app.configs.settings import GRID_SEARCH_N_SPLITS, GRID_SEARCH_VERBOSE, TRAIN_MAX_CORES
@@ -27,7 +27,7 @@ def recursive(class_weight, outcomes, j):
         return res
 
 
-def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False):
+def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_search=False, model_type="RandomForest"):
     print(
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
     
@@ -60,15 +60,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
 
     class_weight = __class_weight
 
-    # Creating a dictionary grid for grid search
-    param_grid = {
-        'random_state': [1],
-        'n_estimators': n_estimators,
-        'min_samples_split': min_samples_split,
-        'class_weight': [{0: 1}],
-        'min_samples_leaf': [3, 5, 7],
-        'max_features': [None]
-    }
+    # Get dictionary grid for grid search
+    param_grid = get_param_grid(model_type, n_estimators, min_samples_split, class_weight=['balanced', 'balanced_subsample'], max_feature=[None, 'sqrt'])
 
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
@@ -101,7 +94,12 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     print(f"Best params: {best_params}")
     print(f"Best score: {best_score}")
 
-    return best_params
+    return {
+        "best_estimator": gridsearch.best_estimator_,   # fitted model
+        "best_params": best_params,                     # dict of best hyperparameters
+        "best_score": best_score,                       # best CV score
+        "cv_results": gridsearch.cv_results_,           # full results from all runs
+    }
 
     # Create a DataFrame to store the grid search results
     # weigh_data = pd.DataFrame({
@@ -125,17 +123,30 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     # # Show the plot
     # plt.show()
 
-
 def scorer(estimator, X, y_true, occurrences):
-    # Assuming estimator is a RandomForestClassifier
     y_pred = estimator.predict(X)
-
-    # Calculate other required scorers and combine
-    precision = precision_score(
-        y_true, y_pred, average='weighted', zero_division=0)
-
-    f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
-
-    combined_score = 0.5 * precision + 0.5 * f1
-
+    
+    totals = len(X)
+    class_diffs = []
+    
+    # Loop over all classes in natural occurrences
+    for cls, nat_pct in occurrences.items():
+        pred_pct = sum(y_pred == cls) / totals * 100
+        diff = abs(pred_pct - nat_pct)
+        class_diffs.append(diff)
+    
+    # Use the maximum deviation or mean deviation
+    max_diff = max(class_diffs)
+    mean_diff = np.mean(class_diffs)
+    
+    # Convert to a normalized natural adherence score [0,1]
+    adherence_score = 1 - (1.5 * max_diff / 100)
+    adherence_score = max(0, adherence_score)  # clip
+    
+    # F1 score (macro to treat all classes equally)
+    f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
+    
+    # Combine F1 and adherence
+    combined_score = 0.5 * f1 + 0.5 * adherence_score
+    
     return combined_score

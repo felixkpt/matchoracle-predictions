@@ -1,4 +1,5 @@
 import os
+import math
 from dotenv import load_dotenv
 
 # Load .env file
@@ -127,12 +128,28 @@ COMMON_FEATURES = [
     'h2h_ht_away_team_over35_games',
 ]
 
-GRID_SEARCH_N_SPLITS = int(os.getenv("GRID_SEARCH_N_SPLITS", 3))
-GRID_SEARCH_VERBOSE = int(os.getenv("GRID_SEARCH_VERBOSE", 0))
-TRAIN_VERBOSE = int(os.getenv("TRAIN_VERBOSE", 0))
-TRAIN_MAX_CORES = int(os.getenv("TRAIN_MAX_CORES", -1))
-
 def basepath():
     current_directory = os.path.dirname(os.path.abspath(__file__))
     path_before_configs, configs_directory = os.path.split(current_directory)
     return path_before_configs
+
+def calculate_optimal_cores(TRAIN_MAX_CORES):
+    """Calculate 80% of available cores, capped by TRAIN_MAX_CORES"""
+    total_cores = os.cpu_count()  # Get total system cores
+    eighty_percent_cores = math.floor(total_cores * 0.8)  # 80% of total cores
+    
+    # Cap it at TRAIN_MAX_CORES if specified
+    if TRAIN_MAX_CORES is not None:
+        optimal_cores = min(eighty_percent_cores, TRAIN_MAX_CORES)
+    else:
+        optimal_cores = eighty_percent_cores
+    
+    # Ensure at least 1 core is used
+    optimal_cores = max(1, optimal_cores)
+        
+    return optimal_cores
+
+GRID_SEARCH_N_SPLITS = int(os.getenv("GRID_SEARCH_N_SPLITS", 3))
+GRID_SEARCH_VERBOSE = int(os.getenv("GRID_SEARCH_VERBOSE", 0))
+TRAIN_MAX_CORES = calculate_optimal_cores(int(os.getenv("TRAIN_MAX_CORES", 8)))
+TRAIN_VERBOSE = int(os.getenv("TRAIN_VERBOSE", 0))

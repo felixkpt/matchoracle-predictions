@@ -3,38 +3,37 @@ from collections import Counter
 import numpy as np
 
 
-def header(compe_data, preds):
+def header(model_type, compe_data, preds):
 
     # Get the total number of predictions
     total_preds = len(preds)
 
-    print(
-        f"--- Below are the model results for {compe_data['id']} ({total_preds} PREDS) ---")
+    print(f"--- Model Results: {model_type} | Competition ID: {compe_data.get('id','UNKNOWN')} | Total Predictions: {len(preds)} ---")
 
     # Calculate the counts of each class label in the predictions
     class_counts = Counter(preds)
     return total_preds, class_counts
 
 
-def print_preds_update_hyperparams(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_preds_update_hyperparams(user_token, target, model_type, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
     if target.endswith('hda_target'):
-        print_hda_predictions(user_token, target, compe_data, preds,
+        print_hda_predictions(user_token, target, model_type, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)
     if target == 'bts_target':
-        print_bts_predictions(user_token, target, compe_data, preds,
+        print_bts_predictions(user_token, target, model_type, compe_data, preds,
                               predict_proba, train_frame, test_frame, print_minimal)
     if target == 'over15_target' or target == 'over25_target' or target == 'over35_target':
-        print_over_predictions(user_token, target, compe_data, preds,
+        print_over_predictions(user_token, target, model_type, compe_data, preds,
                                predict_proba, train_frame, test_frame, print_minimal)
     if target == 'cs_target':
-        print_cs_predictions(user_token, target, compe_data, preds,
+        print_cs_predictions(user_token, target, model_type, compe_data, preds,
                              predict_proba, train_frame, test_frame, print_minimal)
 
 
-def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_hda_predictions(user_token, target, model_type, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
-    total_predictions, class_counts = header(compe_data, preds)
+    total_predictions, class_counts = header(model_type, compe_data, preds)
 
     # Calculate the percentages
     y_pred_0 = round((class_counts[0] / total_predictions) * 100, 2)
@@ -75,9 +74,9 @@ def print_hda_predictions(user_token, target, compe_data, preds, predict_proba, 
     print(f"Predictions: {preds}")
 
 
-def print_bts_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_bts_predictions(user_token, target, model_type, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
-    total_predictions, class_counts = header(compe_data, preds)
+    total_predictions, class_counts = header(model_type, compe_data, preds)
 
     # Calculate the percentages
     y_pred_0 = round((class_counts[0] / total_predictions) * 100, 2)
@@ -116,9 +115,9 @@ def print_bts_predictions(user_token, target, compe_data, preds, predict_proba, 
         print(f"Predictions: {preds}")
 
 
-def print_over_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_over_predictions(user_token, target, model_type, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
-    total_predictions, class_counts = header(compe_data, preds)
+    total_predictions, class_counts = header(model_type, compe_data, preds)
 
     # Calculate the counts of each class label in the predictions
     class_counts = Counter(preds)
@@ -159,9 +158,9 @@ def print_over_predictions(user_token, target, compe_data, preds, predict_proba,
         print(f"Predictions: {preds}")
 
 
-def print_cs_predictions(user_token, target, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
+def print_cs_predictions(user_token, target, model_type, compe_data, preds, predict_proba, train_frame, test_frame=None, print_minimal=False):
 
-    total_predictions, class_counts = header(compe_data, preds)
+    total_predictions, class_counts = header(model_type, compe_data, preds)
 
     if not len(test_frame) > 0:
         confusion_matrix(test_frame, target, preds)

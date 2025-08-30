@@ -24,6 +24,7 @@ async def train(user_token, prediction_type, request_data):
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Training to {TRAIN_TO_DATE}")
+    print(f"Is grid search {is_grid_search}")
 
     print(f'Train/test max limit: {request_data.get("per_page", 1000)}\n')
 
