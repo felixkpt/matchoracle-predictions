@@ -10,6 +10,7 @@ import requests
 
 def load_for_training(user_token, compe_data, be_params, per_page=2000, prefer_saved_matches=True):
     COMPETITION_ID = compe_data.get('id')
+    SEASON_ID = compe_data.get('season_id')
     PREDICTION_TYPE = compe_data.get('prediction_type')
 
     history_limit_per_match = be_params.get('history_limit_per_match')
@@ -21,11 +22,11 @@ def load_for_training(user_token, compe_data, be_params, per_page=2000, prefer_s
     to_date_str = to_date.strftime("%Y-%m-%d")
 
     directory = os.path.abspath(
-        os.path.join(basepath(), "matches/saved/"))
+        os.path.join(basepath(), f"matches/saved/{COMPETITION_ID}/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(os.path.join(
-        directory, f"{COMPETITION_ID}_matches.json"))
+        directory, f"{SEASON_ID}_matches.json"))
 
     loaded_results = None
     if prefer_saved_matches:

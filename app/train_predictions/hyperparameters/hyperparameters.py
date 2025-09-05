@@ -10,7 +10,7 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
     len_train = len(train_frame)
 
     # Setting the range for params
-    _n_estimators = np.linspace(150, 250, rest_counts)
+    _n_estimators = np.linspace(150, 300, rest_counts)
     class_weight = np.linspace(1.0, class_weight_max, class_weight_counts)
     _min_samples_splits = np.linspace(10, 50, rest_counts)
     _max_depth = np.linspace(
@@ -33,31 +33,46 @@ def hyperparameters_array_generator(train_frame, class_weight_counts=14, class_w
 
     return [n_estimators, min_samples_split, class_weight]
 
-def get_param_grid(model_type, n_estimators, min_samples_split, class_weight, max_feature):
-    if model_type in ["RandomForest", "ExtraTrees"]:
+def get_param_grid(model_type, overrides=None):
+    if overrides is None:
+        overrides = {}
+
+    if model_type in ["RandomForest", "BalancedRandomForestClassifier", "ExtraTrees"]:
         param_grid = {
-            "n_estimators": n_estimators,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": [3, 5],
+            "n_estimators": [100, 150, 300],
+            "min_samples_split": [10, 20],
+            "min_samples_leaf": [1, 3, 5],
             "class_weight": ["balanced", "balanced_subsample"],
-            "max_features": max_feature,
+            "max_features": [50, 100],
+            "max_depth": [15]
         }
-    elif model_type in ["GradientBoosting", "HistGB"]:
+    elif model_type in ["GradientBoosting"]:
+        param_grid = {
+            "n_estimators": [100, 150, 300],
+            "max_depth": [3, 5],
+            "min_samples_split": [2, 5, 10],
+            "learning_rate": [0.05, 0.1],
+        }
+    elif model_type in ["HistGB"]:
         param_grid = {
             "learning_rate": [0.05, 0.1],
             "max_depth": [3, 5],
         }
     elif model_type == "LogReg":
         param_grid = {
-            "C": [0.01, 0.1, 1, 10],
+            "C": [0.01, 0.1, 1, 5],
             "solver": ["saga"],
-            "max_iter": [1000, 2000],
+            "max_iter": [8000],
             "class_weight": ["balanced", None],
         }
 
-    return param_grid
+    else:
+        param_grid = {}
 
-def save_hyperparameters(compe_data, target, user_token):
+    # Merge defaults with overrides
+    return {**param_grid, **overrides}
+
+def save_hyperparameters(model_type, compe_data, target, user_token):
     print(f'Saving {target} hyperparameters...')
     id = compe_data['id']
     prediction_type = compe_data['prediction_type']
@@ -72,7 +87,7 @@ def save_hyperparameters(compe_data, target, user_token):
 
     # Load existing hyperparameters data
     directory = os.path.abspath(
-        os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/"))
+        os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{model_type}/"))
     os.makedirs(directory, exist_ok=True)
 
     filename = os.path.abspath(f"{directory}/{target}_hyperparams.json")
@@ -102,18 +117,19 @@ def save_hyperparameters(compe_data, target, user_token):
 
     print("hyperparameters_data",hyperparameters_data)
     print("best_params",best_params)
+    check = f"{id}-{compe_data['season_id']}"
     # Check if id already exists
-    if id in hyperparameters_data:
+    if check in hyperparameters_data:
         # If it exists, update only the 'updated_at' timestamp
-        created_at = hyperparameters_data[id]['created_at']
-        hyperparameters_data[id] = {
+        created_at = hyperparameters_data[check]['created_at']
+        hyperparameters_data[check] = {
             **best_params,
             **main_object,
             **{"created_at": created_at, 'updated_at': now}
         }
     else:
         # If it doesn't exist, add a new entry with 'created_at' and 'updated_at' timestamps
-        hyperparameters_data[id] = {
+        hyperparameters_data[check] = {
             **best_params,
             **main_object,
             **{"created_at": now, 'updated_at': now}
@@ -121,7 +137,11 @@ def save_hyperparameters(compe_data, target, user_token):
 
     # Sort the dictionary by keys
     sorted_hyperparameters = dict(
-        sorted(hyperparameters_data.items(), key=lambda x: int(x[0])))
+        sorted(
+            hyperparameters_data.items(),
+            key=lambda x: tuple(map(int, x[0].split('-')))
+        )
+    )
 
     # Save the sorted data back to the JSON file
     with open(filename, 'w') as file:
@@ -132,19 +152,15 @@ def save_hyperparameters(compe_data, target, user_token):
     update_backend(user_token, id, target, main_object)
 
 
-def get_hyperparameters(compe_data, target, outcomes=None):
+def get_hyperparameters(model_type, compe_data, target, outcomes=None):
 
     has_weights = False
-    n_estimators = 100
-    min_samples_split = 2
-    transformed_dict = {key: 1 for key in outcomes or [0, 1]}
-    class_weight = transformed_dict
-    min_samples_leaf = 1
+    hyper_params = {}
 
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
+            os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{model_type}/{target}_hyperparams.json"))
 
         try:
             with open(filename, 'r') as file:
@@ -152,34 +168,24 @@ def get_hyperparameters(compe_data, target, outcomes=None):
         except:
             FileNotFoundError
 
+        check = f"{id}-{compe_data['season_id']}"
         # Get the hyperparameters for compe id
-        best_params = hyperparameters_data.get(compe_data['id'], None)
+        best_params = hyperparameters_data.get(check, None)
 
         hyper_params = best_params
-        n_estimators = hyper_params['n_estimators']
-        min_samples_split = hyper_params['min_samples_split']
-        min_samples_leaf = hyper_params['min_samples_leaf']
-        class_weight = hyper_params['class_weight']
         has_weights = True
     except:
         KeyError
 
-    hyper_params = {
-        'n_estimators': n_estimators,
-        'min_samples_split': min_samples_split,
-        'min_samples_leaf': min_samples_leaf,
-        'class_weight': class_weight,
-    }
-
     return [hyper_params, has_weights]
 
 
-def get_occurrences(compe_data, target, min_threshold=0.0):
-    compe_id = str(compe_data.get('id'))
+def get_occurrences(model_type, compe_data, target, min_threshold=0.0):
+    id = str(compe_data.get('id'))
     try:
         # Load hyperparameters data
         filename = os.path.abspath(
-            os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{target}_hyperparams.json"))
+            os.path.join(basepath(), f"train_predictions/hyperparameters/saved/{compe_data['prediction_type']}/{model_type}/{target}_hyperparams.json"))
 
         try:
             with open(filename, 'r') as file:
@@ -187,8 +193,10 @@ def get_occurrences(compe_data, target, min_threshold=0.0):
         except FileNotFoundError:
             hyperparameters_data = {}
 
+        check = f"{id}-{compe_data['season_id']}"
+
         # Get the hyperparameters for compe id
-        best_params = hyperparameters_data.get(compe_id, None)
+        best_params = hyperparameters_data.get(check, None)
 
         occurrences = best_params.get("occurrences", {}) if best_params else {}
 

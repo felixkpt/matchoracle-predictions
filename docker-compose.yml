@@ -4,9 +4,8 @@ services:
     container_name: matchoracle-predictions
     ports:
       - "3075:3075"
-    # volumes:
-      # - trained_models:/app/app/trained_models
-      # - trained_features:/app/app/configs/important_features
+    volumes:
+      - trained_models:/app/app/trained_models
     environment:
       - PYTHONUNBUFFERED=1
     networks:
@@ -14,7 +13,6 @@ services:
 
 volumes:
   trained_models:
-  trained_features:
 
 networks:
   appnet:

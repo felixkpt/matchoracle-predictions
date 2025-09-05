@@ -4,9 +4,9 @@ import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, f1_score
 from sklearn.metrics import confusion_matrix as c_matrix
-from app.train_predictions.hyperparameters.hyperparameters import save_hyperparameters
 from app.configs.settings import COMMON_FEATURES, basepath
-
+from collections import Counter
+import numpy as np
 
 def natural_occurrences(possible_outcomes, train_frame, test_frame, target, print_output=True):
     # Combine train and test frames
@@ -56,16 +56,14 @@ def natural_occurrences_grid(possible_outcomes, train_frame, target, without_tar
     return occurrences
 
 
-def save_model(model, train_frame, test_frame, FEATURES, target, compe_data):
+def save_model(model_type, model, target, compe_data):
     COMPETITION_ID = compe_data['id']
+    SEASON_ID = compe_data['season_id']
     PREDICTION_TYPE = compe_data['prediction_type']
-
-    matches = train_frame
-    model.fit(matches[FEATURES], matches[target])
 
     # Create the directory if it doesn't exist
     directory = os.path.abspath(
-        os.path.join(basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/"))
+        os.path.join(basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{SEASON_ID}/"))
     os.makedirs(directory, exist_ok=True)
 
     # Save the model
@@ -73,17 +71,34 @@ def save_model(model, train_frame, test_frame, FEATURES, target, compe_data):
 
     joblib.dump(model, filename)
 
+    # Save metadata (model_type)
+    meta_filename = os.path.join(directory, f"{target}_model_meta.json")
+    with open(meta_filename, "w") as f:
+        json.dump({"model_type": model_type}, f)
+
 
 def get_model(target, compe_data):
     COMPETITION_ID = compe_data['id']
+    SEASON_ID = compe_data['season_id']
     PREDICTION_TYPE = compe_data['prediction_type']
-    # Save the model
-    filename = os.path.abspath(
-        os.path.join(basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_model.joblib"))
-    return joblib.load(filename)
+    # Load model
+    model_filename = os.path.join(
+        basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{SEASON_ID}/{target}_model.joblib")
+    model = joblib.load(model_filename)
+
+    # Load metadata
+    meta_filename = os.path.join(
+        basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{SEASON_ID}/{target}_model_meta.json")
+    model_type = None
+    if os.path.exists(meta_filename):
+        with open(meta_filename, "r") as f:
+            meta = json.load(f)
+            model_type = meta.get("model_type")
+
+    return model, model_type
 
 
-def preds_score(user_token, target, test_frame, preds, compe_data):
+def preds_score_percentage(target, test_frame, preds, should_print=True):
     # Calculate accuracy and precision for the target variable
     accuracy = accuracy_score(test_frame[target], preds)
     precision = precision_score(
@@ -96,17 +111,14 @@ def preds_score(user_token, target, test_frame, preds, compe_data):
     precision = int((precision / 1) * 100)
     f1 = int((f1 / 1) * 100)
 
-    print(f"Accuracy: {accuracy}%")
-    print(f"Precision: {precision}%")
-    print(f"F1 score: {f1}%")
-    print(f"AVG score: {average_score}%")
-    print(f"")
+    if should_print:
+        print(f"Accuracy: {accuracy}%")
+        print(f"Precision: {precision}%")
+        print(f"F1 score: {f1}%")
+        print(f"AVG score: {average_score}%")
+        print(f"")
 
-    scores = accuracy, precision, f1, average_score
-
-    if compe_data and 'is_training' in compe_data and compe_data['is_training']:
-        compe_data['scores'] = scores
-        save_hyperparameters(compe_data, target, user_token)
+    return accuracy, precision, f1, average_score
 
 
 def confusion_matrix(test_frame, target, preds):
@@ -118,50 +130,37 @@ def confusion_matrix(test_frame, target, preds):
     print("\n")
 
 
-from sklearn.inspection import permutation_importance
+def feature_importance(model, model_type, compe_data, target, FEATURES, show=True, threshold=0.009):
+    COMPETITION_ID = compe_data['id']
+    SEASON_ID = compe_data['season_id']
+    PREDICTION_TYPE = compe_data['prediction_type']
 
-def feature_importance(model, compe_data, target, FEATURES, show=True, threshold=0.009):
+    directory = os.path.abspath(os.path.join(
+        basepath(), f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{SEASON_ID}/{model_type}/"
+    ))
+    os.makedirs(directory, exist_ok=True)
+
+    importances = None
+    best_features = []
+
     # Try to use native tree-based importances; if unavailable, keep all features.
     try:
-        feature_importance = model.feature_importances_
+        importances = model.feature_importances_
     except AttributeError:
         if show:
             print("feature_importances_ not available for this model; keeping all FEATURES unchanged.")
         best_features = list(FEATURES)
 
-        # Persist exactly as before
-        COMPETITION_ID = compe_data['id']
-        PREDICTION_TYPE = compe_data['prediction_type']
+    if importances is not None:
+        if show:
+            print(importances)
 
-        directory = os.path.abspath(os.path.join(
-            basepath(), f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/"
-        ))
-        os.makedirs(directory, exist_ok=True)
-
-        filename = os.path.abspath(f"{directory}/{target}_features.json")
-        with open(filename, 'w') as file:
-            json.dump(best_features, file, indent=4)
-
-        return best_features
+        for i, val in enumerate(importances):
+            if val > threshold:
+                best_features.append(FEATURES[i])
 
     if show:
-        print(feature_importance)
-
-    best_features = []
-    for i, val in enumerate(feature_importance):
-        if val > threshold:
-            best_features.append(FEATURES[i])
-
-    if show:
-        print(len(FEATURES), len(best_features), best_features)
-
-    COMPETITION_ID = compe_data['id']
-    PREDICTION_TYPE = compe_data['prediction_type']
-
-    directory = os.path.abspath(os.path.join(
-        basepath(), f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/"
-    ))
-    os.makedirs(directory, exist_ok=True)
+        print("FEATURES: ", len(FEATURES), len(best_features), best_features)
 
     filename = os.path.abspath(f"{directory}/{target}_features.json")
     with open(filename, 'w') as file:
@@ -169,39 +168,9 @@ def feature_importance(model, compe_data, target, FEATURES, show=True, threshold
 
     return best_features
 
-def feature_importance_v1(model, compe_data, target, FEATURES, show=True, threshold=0.009):
-
-    feature_importance = model.feature_importances_
-
-    if show:
-        print(feature_importance)
-
-    best_features = []
-    for i, val in enumerate(feature_importance):
-        if val > threshold:
-            best_features.append(FEATURES[i])
-    if show:
-        print(len(FEATURES), len(best_features), best_features)
-
+def get_features(model_type, compe_data, target):
     COMPETITION_ID = compe_data['id']
-    PREDICTION_TYPE = compe_data['prediction_type']
-
-    # Create the directory if it doesn't exist
-    directory = os.path.abspath(os.path.join(basepath(),
-                                             f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/"))
-    os.makedirs(directory, exist_ok=True)
-
-    # Save the features
-    filename = os.path.abspath(f"{directory}/{target}_features.json")
-    # Save the sorted data back to the JSON file
-    with open(filename, 'w') as file:
-        json.dump(best_features, file, indent=4)
-    
-    return best_features
-
-
-def get_features(compe_data, target):
-    COMPETITION_ID = compe_data['id']
+    SEASON_ID = compe_data['season_id']
     PREDICTION_TYPE = compe_data['prediction_type']
 
     features = COMMON_FEATURES
@@ -210,7 +179,7 @@ def get_features(compe_data, target):
     try:
         # Load hyperparameters data
         filename = os.path.abspath(os.path.join(basepath(),
-                                   f"configs/important_features/{PREDICTION_TYPE}/{COMPETITION_ID}/{target}_features.json"))
+                                   f"trained_models/{PREDICTION_TYPE}/{COMPETITION_ID}/{SEASON_ID}/{model_type}/{target}_features.json"))
 
         try:
             with open(filename, 'r') as file:
@@ -240,3 +209,103 @@ def parse_json(json_data):
         return [parse_json(item) for item in json_data]
     else:
         return json_data
+
+def get_predicted_hda(preds):
+    # Calculate the counts of each class label in the predictions
+    class_counts = Counter(preds)
+    total_predictions = len(preds)
+
+    # Calculate the percentages
+    y_pred_0 = round((class_counts[0] / total_predictions) * 100, 2)
+    y_pred_1 = round((class_counts[1] / total_predictions) * 100, 2)
+    y_pred_2 = round((class_counts[2] / total_predictions) * 100, 2)
+    return {0: y_pred_0, 1: y_pred_1, 2:y_pred_2}
+
+
+def get_predicted(preds):
+    # Calculate the counts of each class label in the predictions
+    class_counts = Counter(preds)
+    total_predictions = len(preds)
+
+    # Calculate the percentages
+    y_pred_0 = round((class_counts[0] / total_predictions) * 100, 2)
+    y_pred_1 = round((class_counts[1] / total_predictions) * 100, 2)
+    return {0: y_pred_0, 1: y_pred_1}
+
+
+def get_predicted_cs(preds, test_frame, predict_proba):
+    predicted = {}
+    match_details = []
+    
+    matches = np.array(test_frame)
+    
+    # Collect match details and count CS frequencies
+    for i, pred in enumerate(preds):
+        proba = max(predict_proba[i])
+        cs = int(pred)
+        match_id = matches[i][0] if len(matches[i]) > 0 else i + 1
+        
+        match_details.append((match_id, cs, proba))
+        
+        if cs in predicted:
+            predicted[cs] += 1
+        else:
+            predicted[cs] = 1
+    
+    # Calculate percentages
+    preds_len = len(preds)
+    for cs in predicted:
+        predicted[cs] = round(predicted[cs] / preds_len * 100, 2)
+    
+    # Sort by CS value
+    predicted = dict(sorted(predicted.items(), key=lambda x: int(x[0])))
+    
+    return predicted, match_details
+
+import numpy as np
+
+import numpy as np
+
+def bound_probabilities(probas, min_val=7, max_val=90):
+    """
+    Clamp probabilities within a specified range, preserving the top class,
+    convert to integers, and normalize to sum 100%. Ensures all values >= min_val.
+
+    Parameters:
+        probas (list or np.ndarray): Probabilities (0-100 scale or 0-1 scale)
+        min_val (int, optional): Minimum allowed probability for any class. Default is 10.
+        max_val (int, optional): Maximum allowed probability for any class. Default is 90.
+
+    Returns:
+        np.ndarray: Integer probabilities summing to 100, all >= min_val
+    """
+    probas = np.array(probas, dtype=float)
+
+    # Scale if in 0-1 range
+    if probas.max() <= 1.0:
+        probas = probas * 100
+
+    # Remember the index of the top class
+    top_idx = np.argmax(probas)
+
+    # Clamp top class to max_val
+    probas[top_idx] = min(probas[top_idx], max_val)
+
+    # Raise other classes below min_val
+    for i in range(len(probas)):
+        if i != top_idx and probas[i] < min_val:
+            probas[i] = probas[i] + min_val
+
+    # Normalize to sum 100
+    total = probas.sum()
+    scale = 100 / total
+    probas = probas * scale
+
+    # Convert to integers
+    probas = np.floor(probas).astype(int)
+
+    # Adjust any rounding difference to top class
+    diff = 100 - probas.sum()
+    probas[top_idx] += diff
+
+    return probas

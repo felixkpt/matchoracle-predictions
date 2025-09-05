@@ -227,6 +227,7 @@ def do_update_trained_competition(user_token, compe_data, train_matches_counts, 
 
     json_data = json.dumps({
         "competition_id": compe_data['id'],
+        "season_id": compe_data['season_id'],
         "trained_to": compe_data['trained_to'],
         "prediction_type": compe_data['prediction_type'],
         "results": {"created_counts": train_matches_counts, "updated_counts": 0, "failed_counts": 0},
@@ -256,6 +257,7 @@ def do_update_predicted_competition(user_token, compe_data, start_time):
 
     json_data = json.dumps({
         "competition_id": compe_data['id'],
+        "season_id": compe_data['season_id'],
         "prediction_type": compe_data['prediction_type'],
         "results": {"created_counts": len(compe_data['predictions']), "updated_counts": 0, "failed_counts": 0},
         "seconds_taken": duration,

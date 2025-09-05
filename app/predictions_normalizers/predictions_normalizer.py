@@ -9,9 +9,9 @@ from app.predictions_normalizers.filter_scores_dict import filter_scores_dict
 # Function to normalize predictions
 
 
-def predictions_normalizer(prediction, compe_data):
+def predictions_normalizer(cs_model_type, prediction, compe_data):
     # Get occurrences from hyperparameters
-    occurrences = get_occurrences(compe_data, 'cs_target', 0.1)
+    occurrences = get_occurrences(cs_model_type, compe_data, 'cs_target', 0.1)
 
     # Generating a list of dictionaries containing scores
     scores_dict = scores(occurrences)

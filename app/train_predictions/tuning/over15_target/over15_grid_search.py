@@ -13,7 +13,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 5, 1.3, 4)
+        train_frame, 5, 1.3, 3)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -29,8 +29,20 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         if x[0] < 2 and x[1] < 2:
             class_weight.append(x)
 
-    # Get dictionary grid for grid search
-    param_grid = get_param_grid(model_type, n_estimators, min_samples_split, class_weight=['balanced'], max_feature=[None, 'sqrt'])
+    overrides= {}
+    
+    if model_type in ["RandomForest", "BalancedRandomForestClassifier", "ExtraTrees"]:
+        overrides= {
+            'n_estimators': n_estimators,
+            'min_samples_split': min_samples_split,
+            'min_samples_leaf': [1, 3],
+            'class_weight': ['balanced', 'balanced_subsample'],
+            'max_features': ['sqrt', 'log2', None],
+            'max_depth': [5, 10, None]
+        }
+
+    # Get the default param grid and merge with overrides
+    param_grid = get_param_grid(model_type, overrides)
 
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
@@ -39,7 +51,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             estimator=model,
             param_grid=param_grid,
             cv=StratifiedKFold(n_splits=grid_search_n_splits),
-            scoring=lambda estimator, X, y_true: scorer(
+            scoring=lambda estimator, X, y_true: scorer_v2(
                 estimator, X, y_true, occurrences),
             verbose=GRID_SEARCH_VERBOSE,
             n_jobs=TRAIN_MAX_CORES,
@@ -48,9 +60,9 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         gridsearch = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_grid,
-            n_iter=10,
             cv=grid_search_n_splits,
-            scoring=lambda estimator, X, y_true: scorer(
+            n_iter=20,
+            scoring=lambda estimator, X, y_true: scorer_v2(
                 estimator, X, y_true, occurrences),
             random_state=42,
             verbose=GRID_SEARCH_VERBOSE,
@@ -131,6 +143,45 @@ def scorer(estimator, X, y_true, occurrences):
     # Calculate other required scorers and combine
     f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
 
-    score = 0.4 * f1 + 0.7 * natural_score
+    score = 0.6 * f1 + 0.4 * natural_score
 
     return score
+
+def scorer_v2(estimator, X, y_true, occurrences):
+    y_pred = estimator.predict(X)
+    totals = len(X)
+
+    # True distribution (percentages)
+    true_dist = np.array([occurrences.get(i, 0) for i in [0, 1, 2]])
+    true_dist = true_dist / true_dist.sum() * 100
+
+    # Predicted distribution (percentages)
+    pred_counts = [sum(p == i for p in y_pred) for i in [0, 1, 2]]
+    pred_dist = np.array(pred_counts) / totals * 100
+
+    # Distribution penalty (mean absolute difference across all classes)
+    dist_penalty = np.mean(np.abs(pred_dist - true_dist)) / 100
+    natural_score = max(0, 1 - dist_penalty)
+
+    # Standard metrics
+    f1_macro = f1_score(y_true, y_pred, average="macro", zero_division=0)
+    f1_weighted = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+    f1_draw = f1_score(y_true, y_pred, labels=[1], average="macro", zero_division=0)
+
+    # Coverage penalty: punish ignoring existing classes
+    coverage_penalty = 1.0
+    for i in [0, 1, 2]:
+        if occurrences.get(i, 0) > 0 and pred_counts[i] == 0:
+            coverage_penalty -= 0.3
+
+    coverage_penalty = max(0, coverage_penalty)
+
+    # Weighted combination
+    combined_score = (
+        0.25 * f1_macro +
+        0.20 * f1_weighted +
+        0.20 * f1_draw +      # increased weight on draws
+        0.35 * natural_score
+    )
+
+    return combined_score * coverage_penalty

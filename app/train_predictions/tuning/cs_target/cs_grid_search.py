@@ -38,19 +38,6 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
 
     print(len(outcomes))
 
-    # Count the occurrences of each class in cs_target
-    class_counts = train_frame['cs_target'].value_counts()
-    # Set a threshold for the minimum number of instances per class
-    min_instances_threshold = 5
-
-    # Identify classes with counts below the threshold
-    classes_to_drop = class_counts[class_counts <
-                                   min_instances_threshold].index
-
-    # Filter out instances with classes to drop
-    filtered_train_frame = train_frame[~train_frame['cs_target'].isin(
-        classes_to_drop)]
-
     class_weight = np.linspace(1.0, 1.2, 2)
     __class_weight = []
 
@@ -60,8 +47,37 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
 
     class_weight = __class_weight
 
-    # Get dictionary grid for grid search
-    param_grid = get_param_grid(model_type, n_estimators, min_samples_split, class_weight=['balanced', 'balanced_subsample'], max_feature=[None, 'sqrt'])
+    overrides = {}
+    
+    if model_type in ["RandomForest", "BalancedRandomForestClassifier", "ExtraTrees"]:
+        overrides = {
+            'n_estimators': n_estimators,
+            'min_samples_split': min_samples_split,
+            'min_samples_leaf': [1, 4],
+            'class_weight': [None],
+            'max_features': ['sqrt', 'log2', None],
+            'max_depth': [5, 10, 20, None]
+        }
+    elif model_type in ["GradientBoosting"]:
+        overrides = {
+            "n_estimators": [250],
+            'max_depth': [10, 20, None],
+            "min_samples_split": [2, 5],
+            "learning_rate": [0.5],
+        }
+    elif model_type in ["HistGB"]:
+        overrides = {
+            "learning_rate": [0.1],
+        }
+    elif model_type == "LogReg":
+        overrides = {
+            "C": [1, 10],
+            "max_iter": [8000],
+            "class_weight": [None],
+        }
+
+    # Get the default param grid and merge with overrides
+    param_grid = get_param_grid(model_type, overrides)
 
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
@@ -79,8 +95,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         gridsearch = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_grid,
-            n_iter=10,
             cv=grid_search_n_splits,
+            n_iter=20,
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             random_state=42,

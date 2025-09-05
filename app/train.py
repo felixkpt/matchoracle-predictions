@@ -6,21 +6,24 @@ from app.run_train import run_train
 from app.configs.active_competitions.competitions_data import update_job_status
 
 
-# Calculate from_date and to_date
-TRAIN_TO_DATE = datetime.today() + relativedelta(days=-30 * 6)
-
 async def train(user_token, prediction_type, request_data):
     print("\n............... START TRAIN PREDICTIONS ..................\n")
 
     # Extract values from request_data
     target = request_data.get('target')
+    season_id = request_data.get('season_id')
+    season_start_date = request_data.get('season_start_date')
+    model_type = request_data.get('model_type')
     prefer_saved_matches = request_data.get('prefer_saved_matches', True)
     is_grid_search = request_data.get('is_grid_search', False)
+    is_random_search = request_data.get('is_random_search', False)
     ignore_trained = request_data.get('ignore_trained', False)
     last_action_date = request_data.get('retrain_if_last_train_is_before')
     if last_action_date:
         last_action_date = parser.parse(last_action_date).strftime("%Y-%m-%d %H:%M:%S")
 
+    # If season_start_date is given, use it; otherwise fallback to 6 months ago
+    TRAIN_TO_DATE = parser.parse(season_start_date) if season_start_date else datetime.today() - relativedelta(months=6)
 
     print(f"Main Prediction Target: {target if target else 'all'}")
     print(f"Training to {TRAIN_TO_DATE}")
@@ -90,6 +93,7 @@ async def train(user_token, prediction_type, request_data):
 
                                 compe_data = {
                                     'id': COMPETITION_ID,
+                                    'season_id': season_id,
                                     'name': competition['name'],
                                     "games_counts": competition['games_counts'],
                                     'prediction_type': PREDICTION_TYPE
@@ -103,22 +107,22 @@ async def train(user_token, prediction_type, request_data):
                                 }
 
                                 print(
-                                    f"{i}/{len(competition_ids)}. COMPETITION #{COMPETITION_ID}, ({competition['name']})")
+                                    f"{i}/{len(competition_ids)}. COMPETITION #{COMPETITION_ID}, SEASON #{season_id}, ({competition['name']})")
                                 print(
-                                    f"***** START TRAIN PREDICTS FOR {COMPETITION_ID} *****")
+                                    f"***** START TRAIN PREDICTS FOR Compe: #{COMPETITION_ID}, Season: #{season_id} *****")
 
                                 # Start the timer
                                 start_time = datetime.now()
                                 
                                 # Run training for the current configuration
                                 run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
-                                          prefer_saved_matches=prefer_saved_matches, is_grid_search=is_grid_search, per_page=request_data.get('per_page', 380), start_time=start_time)
+                                          prefer_saved_matches=prefer_saved_matches, is_grid_search=is_grid_search, is_random_search=is_random_search, per_page=request_data.get('per_page', 380), start_time=start_time, model_type=model_type)
                                 
                                 # End the timer
                                 end_time = datetime.now()
                                 duration = end_time - start_time
                                 print(
-                                    f"***** END TRAIN PREDICTS FOR {COMPETITION_ID} took {duration.total_seconds() / 60:.2f} minutes *****\n")
+                                    f"***** END TRAIN PREDICTS FOR Competition: #{COMPETITION_ID}, Season: #{season_id} took {duration.total_seconds() / 60:.2f} minutes *****\n")
 
     
     job_id = request_data.get('job_id')

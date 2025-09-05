@@ -134,9 +134,9 @@ def basepath():
     return path_before_configs
 
 def calculate_optimal_cores(TRAIN_MAX_CORES):
-    """Calculate 80% of available cores, capped by TRAIN_MAX_CORES"""
+    """Calculate 60% of available cores, capped by TRAIN_MAX_CORES"""
     total_cores = os.cpu_count()  # Get total system cores
-    eighty_percent_cores = math.floor(total_cores * 0.8)  # 80% of total cores
+    eighty_percent_cores = math.floor(total_cores * 0.6)  # 60% of total cores
     
     # Cap it at TRAIN_MAX_CORES if specified
     if TRAIN_MAX_CORES is not None:

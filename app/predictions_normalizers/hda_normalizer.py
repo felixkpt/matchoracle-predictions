@@ -1,5 +1,5 @@
 import numpy as np
-
+from app.helpers.functions import bound_probabilities
 
 def normalizer(predict_proba):
     pred_proba_values = np.array(predict_proba)
@@ -7,15 +7,13 @@ def normalizer(predict_proba):
     # Convert probabilities to percentages
     percentages = pred_proba_values * 100
 
-    # Round percentages and organize into a list of lists
+    # Normalize and prevent hard 100/0 extremes
     normalized_preds = []
     for percentage in percentages:
-        rounded_percentage = [round(p) for p in percentage]
-        if rounded_percentage[0] > 0:
-            normalized_preds.append(rounded_percentage)
+        adjusted = bound_probabilities([round(p) for p in percentage], 7)
+        normalized_preds.append(adjusted)
 
     return normalized_preds
-
 
 def prevent_equals_in_ft(prediction):
     ft_hda_pick = int(prediction['ft_hda_pick'])
@@ -50,6 +48,7 @@ def prevent_equals_in_ft(prediction):
         ft_hda_pick = 1
     if ft_away_win_proba > ft_home_win_proba and ft_away_win_proba > ft_draw_proba:
         ft_hda_pick = 2
+
 
     prediction['ft_hda_pick'] = ft_hda_pick
     prediction['ft_home_win_proba'] = ft_home_win_proba

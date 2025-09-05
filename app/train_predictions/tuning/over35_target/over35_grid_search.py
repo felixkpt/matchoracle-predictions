@@ -13,7 +13,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 5, 1.3, 4)
+        train_frame, 5, 1.3, 3)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -29,8 +29,20 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         if x[0] < 2 and x[1] < 2:
             class_weight.append(x)
 
-    # Get dictionary grid for grid search
-    param_grid = get_param_grid(model_type, n_estimators, min_samples_split, class_weight=['balanced', None], max_feature=[None, 'sqrt'])
+    overrides= {}
+    
+    if model_type in ["RandomForest", "BalancedRandomForestClassifier", "ExtraTrees"]:
+        overrides= {
+            'n_estimators': n_estimators,
+            'min_samples_split': min_samples_split,
+            'min_samples_leaf': [1, 4, 8],
+            'class_weight': [None, 'balanced', 'balanced_subsample'],
+            'max_features': ['sqrt', 'log2', None],
+            'max_depth': [5, 10, 20, None]
+        }
+
+    # Get the default param grid and merge with overrides
+    param_grid = get_param_grid(model_type, overrides)
 
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
@@ -48,8 +60,8 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         gridsearch = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_grid,
-            n_iter=10,
             cv=grid_search_n_splits,
+            n_iter=20,
             scoring=lambda estimator, X, y_true: scorer(
                 estimator, X, y_true, occurrences),
             random_state=42,

@@ -13,7 +13,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         f"SearchCV Strategy: {'Randomized' if is_random_search else 'GridSearch'}")
 
     n_estimators, min_samples_split, class_weight = hyperparameters_array_generator(
-        train_frame, 5, 1.3, 4)
+        train_frame, 5, 1.3, 3)
 
     _class_weight = []
     for i, x in enumerate(class_weight):
@@ -29,8 +29,20 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         if x[0] < 2 and x[1] < 2:
             class_weight.append(x)
 
-    # Get dictionary grid for grid search
-    param_grid = get_param_grid(model_type, n_estimators, min_samples_split, class_weight=['balanced', 'balanced_subsample'], max_feature=[None, 'sqrt'])
+    overrides= {}
+    
+    if model_type in ["RandomForest", "BalancedRandomForestClassifier", "ExtraTrees"]:
+        overrides= {
+            'n_estimators': n_estimators,
+            'min_samples_split': min_samples_split,
+            'min_samples_leaf': [1, 4],
+            'class_weight': [None, 'balanced', 'balanced_subsample'],
+            'max_features': ['sqrt', None],
+            'max_depth': [5, 10, None]
+        }
+
+    # Get the default param grid and merge with overrides
+    param_grid = get_param_grid(model_type, overrides)
 
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
@@ -39,7 +51,7 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
             estimator=model,
             param_grid=param_grid,
             cv=StratifiedKFold(n_splits=grid_search_n_splits),
-            scoring=lambda estimator, X, y_true: scorer(
+            scoring=lambda estimator, X, y_true: scorer_v2(
                 estimator, X, y_true, occurrences),
             verbose=GRID_SEARCH_VERBOSE,
             n_jobs=TRAIN_MAX_CORES,
@@ -48,9 +60,9 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
         gridsearch = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_grid,
-            n_iter=10,
             cv=grid_search_n_splits,
-            scoring=lambda estimator, X, y_true: scorer(
+            n_iter=20,
+            scoring=lambda estimator, X, y_true: scorer_v2(
                 estimator, X, y_true, occurrences),
             random_state=42,
             verbose=GRID_SEARCH_VERBOSE,
@@ -91,6 +103,49 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
 
     # # Show the plot
     # plt.show()
+
+
+def scorer_v2(estimator, X, y_true, occurrences):
+    y_pred = estimator.predict(X)
+    totals = len(X)
+
+    # True occurrences (percentages)
+    occ_0 = occurrences.get(0, 0)
+    occ_1 = occurrences.get(1, 0)
+
+    # Predicted percentages
+    y_pred_0 = sum(1 for p in y_pred if p == 0) / totals * 100
+    y_pred_1 = sum(1 for p in y_pred if p == 1) / totals * 100
+
+    # Dynamic threshold (min 5%, or 10% of dataset)
+    max_diff_threshold = max(5, 0.1 * totals)
+
+    # Soft penalty if prediction distribution overshoots
+    penalty = 1.0
+    if y_pred_0 > occ_0 + max_diff_threshold:
+        penalty -= min(0.5, (y_pred_0 - occ_0) / 100)
+    if y_pred_1 > occ_1 + max_diff_threshold:
+        penalty -= min(0.5, (y_pred_1 - occ_1) / 100)
+    penalty = max(0.5, penalty)  # never kill score completely
+
+    # Natural distribution score
+    diff_0 = abs(y_pred_0 - occ_0)
+    diff_1 = abs(y_pred_1 - occ_1)
+    max_diff = max(diff_0, diff_1)
+    natural_score = max(0, 1 - (1.5 * max_diff / 100))
+
+    # Standard metrics
+    accuracy = accuracy_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+
+    # Weighted blend
+    score = (
+        0.3 * accuracy +
+        0.3 * recall +
+        0.4 * natural_score
+    )
+
+    return score * penalty
 
 
 def scorer(estimator, X, y_true, occurrences):
