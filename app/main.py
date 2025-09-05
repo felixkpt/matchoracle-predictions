@@ -30,7 +30,7 @@ def get_user_token_or_404():
     user_token = get_user_token(EMAIL, PASSWORD)
     if not user_token:
         raise HTTPException(
-            status_code=401, detail="Failed to obtain user token.")
+            status_code=401, detail=f"Failed to obtain user token for {EMAIL}")
     return user_token
 
 @app.post("/train")

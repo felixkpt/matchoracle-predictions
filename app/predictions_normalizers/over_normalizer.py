@@ -1,5 +1,5 @@
 import numpy as np
-
+from app.helpers.functions import bound_probabilities
 
 def normalizer(predict_proba):
     pred_proba_values = np.array(predict_proba)
@@ -10,12 +10,10 @@ def normalizer(predict_proba):
     # Round percentages and organize into a list of lists
     normalized_preds = []
     for percentage in percentages:
-        rounded_percentage = [round(p) for p in percentage]
-        if rounded_percentage[0] > 0:
-            normalized_preds.append(rounded_percentage)
+        adjusted = bound_probabilities([round(p) for p in percentage], 7)
+        normalized_preds.append(adjusted)
 
     return normalized_preds
-
 
 def prevent_equals_in_overs(prediction):
     over_under15_pick = int(prediction['over_under15_pick'])
@@ -101,6 +99,7 @@ def prevent_equals_in_overs(prediction):
     over_under35_pick = 0
     if over35_proba > under35_proba:
         over_under35_pick = 1
+
 
     prediction['over15_proba'] = over15_proba
     prediction['under15_proba'] = under15_proba

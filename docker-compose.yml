@@ -1,0 +1,19 @@
+services:
+  predictor1:
+    build: .
+    container_name: matchoracle-predictions
+    ports:
+      - "3075:3075"
+    volumes:
+      - trained_models:/app/app/trained_models
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - appnet
+
+volumes:
+  trained_models:
+
+networks:
+  appnet:
+    external: true

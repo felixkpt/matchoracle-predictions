@@ -1,3 +1,4 @@
+import numpy as np
 from app.configs.settings import API_BASE_URL
 from app.predictions.ft_hda_predictions import ft_hda_predictions
 from app.predictions.ht_hda_predictions import ht_hda_predictions
@@ -18,6 +19,7 @@ from app.configs.active_competitions.competitions_data import update_last_predic
 from dateutil import parser
 from app.configs.active_competitions.competitions_data import update_job_status
 from app.configs.active_competitions.competitions_data import do_update_predicted_competition
+from app.helpers.functions import get_model
 
 
 async def predict(user_token, prediction_type, request_data):
@@ -39,6 +41,7 @@ async def predict(user_token, prediction_type, request_data):
 
     # Extract parameters from request_data
     competition_id = request_data.get('competition')
+    season_id = request_data.get('season_id')
     target = request_data.get('target')
     last_action_date = request_data.get('last_predict_date')
     from_date = request_data.get('from_date')
@@ -58,20 +61,42 @@ async def predict(user_token, prediction_type, request_data):
     
     print(f"From & to date: {from_date}, {to_date}\n")
 
-    # If competition_id is provided, use it; otherwise, fetch from the backend API
-    competitions = {f"{competition_id}": {'id': competition_id, 'last_predicted_at': 'N/A'}} if competition_id else get_trained_competitions(last_action_date)
+    # Fetch competitions
+    if competition_id:
+        # Require season_id when competition_id is provided
+        if not season_id:
+            raise ValueError(f"Season ID is required when specifying competition {competition_id}")
 
-    # Loop over competition IDs
-    for i, COMPETITION_ID in enumerate(competitions):
+        competitions = {
+            f"{competition_id}": {
+                'id': competition_id,
+                'season_id': season_id,
+                'last_predicted_at': 'N/A'
+            }
+        }
+    else:
+        competitions = get_trained_competitions(last_action_date)
+        # Ensure each competition has a season
+        for cid, cdata in competitions.items():
+            if 'season_id' not in cdata or not cdata['season_id']:
+                raise ValueError(f"Competition {cid} is missing a season_id")
 
+    job_id = request_data.get('job_id')
+    if job_id:
+        update_job_status(user_token, job_id, status="started")
+
+    # Loop over competitions
+    for i, (COMPETITION_ID, COMP_DATA) in enumerate(competitions.items()):
         compe_data = {}
         compe_data['id'] = COMPETITION_ID
+        SEASON_ID = COMP_DATA['season_id']
+        compe_data['season_id'] = SEASON_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
         compe_data['version'] = VERSION
         compe_data['predictions'] = []
 
         Logger.info(
-            f"{i+1}/{len(competitions)}. Competition: #{COMPETITION_ID}, (last pred. {competitions[COMPETITION_ID]['last_predicted_at']} )")
+            f"{i+1}/{len(competitions)}. Competition: #{COMPETITION_ID}, Season: #{SEASON_ID} (last pred. {competitions[COMPETITION_ID]['last_predicted_at']} )")
         Logger.info(f"Prediction type: {PREDICTION_TYPE}")
 
         dates = get_dates_with_games(user_token, COMPETITION_ID, from_date.strftime(
@@ -83,7 +108,7 @@ async def predict(user_token, prediction_type, request_data):
 
         # Loop through each day from from_date to to_date
         for target_date in dates:
-            Logger.info(f"Competition: {COMPETITION_ID}")
+            Logger.info(f"Competition: {COMPETITION_ID}, Season: #{SEASON_ID}")
             Logger.info(f"Date: {target_date}\n")
 
             matches = load_for_predictions(user_token, compe_data, target_date)
@@ -95,27 +120,42 @@ async def predict(user_token, prediction_type, request_data):
             else:
                 print(f'Predicting {total_matches} matches...')
 
+                cs_model_type = None
                 # Get predictions for different outcomes
                 ft_hda_preds = ht_hda_preds = bts_preds = over15_preds= over25_preds = over35_preds = cs_preds = [None, None]
                 if target is None or target == 'hda' or target == 'ft-hda':
                     ft_hda_preds = ft_hda_predictions(matches, compe_data)
+                    
                 if target is None or target == 'ht-hda':
                     ht_hda_preds = ht_hda_predictions(matches, compe_data)
+                    
                 if target is None or target == 'bts':
                     bts_preds = bts_predictions(matches, compe_data)
+                
                 if target is None or target == 'over15':
                     over15_preds = over15_predictions(matches, compe_data)
+ 
                 if target is None or target == 'over25':
                     over25_preds = over25_predictions(matches, compe_data)
+
                 if target is None or target == 'over35':
                     over35_preds = over35_predictions(matches, compe_data)
+
                 if target is None or target == 'cs':
+                    # Try getting the model
+                    try:
+                        model, cs_model_type = get_model('cs_target', compe_data)
+                    except FileNotFoundError:
+                        pass
                     cs_preds = cs_predictions(matches, compe_data)
 
+                if cs_model_type == None:
+                    print("Could not get cs model type")
+                    return
                 # Check if any of the required predictions is null
                 if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
                     # Merge and store predictions
-                    predictions = merge_and_store_predictions(user_token, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
+                    predictions = merge_and_store_predictions(user_token, cs_model_type, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
                                                 bts_preds, over15_preds, over25_preds, over35_preds, cs_preds)
                     compe_data['predictions'] = predictions
                     # Update last predicted competitions
@@ -131,14 +171,13 @@ async def predict(user_token, prediction_type, request_data):
 
 
     job_id = request_data.get('job_id')
-    print('job_id:', job_id)
     if job_id:
         update_job_status(user_token, job_id, status="completed")
 
     print(f"\n....... END PREDICTIONS, Happy coding! ........")
 
 
-def merge_and_store_predictions(user_token, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
+def merge_and_store_predictions(user_token, cs_model_type, compe_data, target_date, matches, target_match, ft_hda_preds, ht_hda_preds,
                                 bts_preds, over15_preds, over25_preds, over35_preds, cs_preds):
     """
     Merge predictions and store them.
@@ -239,7 +278,7 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ta
         }
 
         # Normalize predictions
-        pred_obj = predictions_normalizer(pred_obj, compe_data)
+        pred_obj = predictions_normalizer(cs_model_type, pred_obj, compe_data)
         predictions.append(pred_obj)
 
     data = {
@@ -251,11 +290,23 @@ def merge_and_store_predictions(user_token, compe_data, target_date, matches, ta
     }
 
     if len(data['predictions']) > 0:
+        data = fix_numpy_types_in_predictions(data)
         message = storePredictions(data, user_token)
         print(message)
     
     return predictions
 
+
+def fix_numpy_types_in_predictions(data):
+    """Convert numpy types in the predictions data structure"""
+    if 'predictions' in data:
+        for prediction in data['predictions']:
+            for key, value in prediction.items():
+                if isinstance(value, (np.integer, np.int64)):
+                    prediction[key] = int(value)
+                elif isinstance(value, (np.floating, np.float64)):
+                    prediction[key] = float(value)
+    return data
 
 def storePredictions(data, user_token):
     """
@@ -270,7 +321,7 @@ def storePredictions(data, user_token):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/predictions/from-python-app/store-predictions"
+    url = f"{API_BASE_URL}/dashboard/predictions/from-python-app/store-predictions"
 
     # Set headers for the request
     headers = {
@@ -304,7 +355,7 @@ def get_dates_with_games(user_token, COMPETITION_ID, from_date, to_date):
     """
 
     # Set the API endpoint URL
-    url = f"{API_BASE_URL}/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
+    url = f"{API_BASE_URL}/dashboard/competitions/view/{COMPETITION_ID}/get-dates-with-unpredicted-games"
 
     # Set headers for the request
     headers = {
