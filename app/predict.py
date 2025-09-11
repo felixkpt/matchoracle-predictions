@@ -92,6 +92,7 @@ async def predict(user_token, prediction_type, request_data):
         SEASON_ID = COMP_DATA['season_id']
         compe_data['season_id'] = SEASON_ID
         compe_data['prediction_type'] = PREDICTION_TYPE
+        compe_data['task'] = request_data.get('task')
         compe_data['version'] = VERSION
         compe_data['predictions'] = []
 

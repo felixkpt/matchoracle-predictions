@@ -15,6 +15,7 @@ class TrainRequest(BaseModel):
     ignore_trained: Optional[bool] = False
     per_page: Optional[int] = None
     job_id: Optional[str] = None
+    task: Optional[str] = None
 
 
 class PredictRequest(BaseModel):
@@ -28,3 +29,5 @@ class PredictRequest(BaseModel):
     to_date: Optional[str] = None
     target_match: Optional[int] = None
     job_id: Optional[str] = None
+    task: Optional[str] = None
+

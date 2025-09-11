@@ -96,7 +96,8 @@ async def train(user_token, prediction_type, request_data):
                                     'season_id': season_id,
                                     'name': competition['name'],
                                     "games_counts": competition['games_counts'],
-                                    'prediction_type': PREDICTION_TYPE
+                                    'prediction_type': PREDICTION_TYPE,
+                                    'task': request_data.get('task'),
                                 }
                                 # Parameters for training
                                 be_params = {
