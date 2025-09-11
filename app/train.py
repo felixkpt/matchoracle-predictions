@@ -116,7 +116,7 @@ async def train(user_token, prediction_type, request_data):
                                 
                                 # Run training for the current configuration
                                 run_train(user_token, compe_data=compe_data, target=target, be_params=be_params,
-                                          prefer_saved_matches=prefer_saved_matches, is_grid_search=is_grid_search, is_random_search=is_random_search, per_page=request_data.get('per_page', 380), start_time=start_time, model_type=model_type)
+                                          prefer_saved_matches=prefer_saved_matches, is_grid_search=is_grid_search, is_random_search=is_random_search, per_page=request_data.get('per_page', 380), start_time=start_time, model_type=model_type, job_id=job_id)
                                 
                                 # End the timer
                                 end_time = datetime.now()
@@ -124,10 +124,6 @@ async def train(user_token, prediction_type, request_data):
                                 print(
                                     f"***** END TRAIN PREDICTS FOR Competition: #{COMPETITION_ID}, Season: #{season_id} took {duration.total_seconds() / 60:.2f} minutes *****\n")
 
-    
-    job_id = request_data.get('job_id')
-    if job_id:
-        update_job_status(user_token, job_id, status="completed")
     
     print(f"\n....... END TRAIN PREDICTIONS, Happy coding! ........")
 

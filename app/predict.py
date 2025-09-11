@@ -151,7 +151,12 @@ async def predict(user_token, prediction_type, request_data):
 
                 if cs_model_type == None:
                     print("Could not get cs model type")
+                    
+                    if job_id:
+                        update_job_status(user_token, job_id, status="failed")
+
                     return
+    
                 # Check if any of the required predictions is null
                 if ft_hda_preds[0] is not None or over15_preds[0] is not None or over25_preds[0] is not None or over35_preds[0] is not None or bts_preds[0] is not None is not None or cs_preds[0] is not None:
                     # Merge and store predictions

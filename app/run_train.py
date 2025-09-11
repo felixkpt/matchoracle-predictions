@@ -2,13 +2,13 @@ import pandas as pd
 from app.matches.load_matches import load_for_training
 from app.train_predictions.train_predictions import train_predictions
 from app.helpers.print_results import print_preds_hyperparams
-from app.configs.active_competitions.competitions_data import update_trained_competitions
+from app.configs.active_competitions.competitions_data import update_trained_competitions, update_job_status
 from app.configs.settings import TRAIN_MAX_CORES
 from app.helpers.functions import natural_occurrences, preds_score_percentage, save_model, get_predicted_hda, get_predicted, get_predicted_cs
 from app.train_predictions.hyperparameters.hyperparameters import save_hyperparameters
 from app.configs.logger import Logger
 
-def run_train(user_token, compe_data, target, be_params, prefer_saved_matches, is_grid_search, is_random_search, per_page, start_time, model_type):
+def run_train(user_token, compe_data, target, be_params, prefer_saved_matches, is_grid_search, is_random_search, per_page, start_time, model_type, job_id=None):
     print(f'TRAIN_MAX_CORES: {TRAIN_MAX_CORES}\n')
 
     # Initialize configurations for model training
@@ -36,7 +36,12 @@ def run_train(user_token, compe_data, target, be_params, prefer_saved_matches, i
     train_size = int(total_matches * train_ratio)
     train_matches = all_matches[:train_size]
 
-    print(f'Total matches before filters: {total_matches}\n')
+    print(f'Total matches before filters: {total_matches}')
+    
+    if (total_matches == 0):
+        if job_id:
+            update_job_status(user_token, job_id, status="failed")
+        return
 
     # Train models for each target if the target matches or is unspecified
     for key, config in target_configs.items():
@@ -50,6 +55,10 @@ def run_train(user_token, compe_data, target, be_params, prefer_saved_matches, i
         compe_data['games_counts'] = total_matches
         update_trained_competitions(user_token, compe_data, len(train_matches), start_time)
         print('\n')
+    
+    if job_id:
+        update_job_status(user_token, job_id, status="completed")
+
 
 def train_target_model(user_token, all_matches, compe_data, trgt, outcomes, is_grid_search, is_random_search, update_model, total_matches, train_ratio, model_type):
     print(f'***** Start all models training for target: {trgt} *****')

@@ -44,6 +44,10 @@ def grid_search(model, train_frame, FEATURES, target, occurrences, is_random_sea
     # Get the default param grid and merge with overrides
     param_grid = get_param_grid(model_type, overrides)
 
+    # Set estimator to run single-threaded
+    if hasattr(model, "n_jobs"):
+        model.set_params(n_jobs=1)
+
     grid_search_n_splits = 2 if len(train_frame) < 50 else GRID_SEARCH_N_SPLITS
     # Fitting grid search to the train data
     if not is_random_search:

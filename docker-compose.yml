@@ -5,6 +5,7 @@ services:
     ports:
       - "3075:3075"
     volumes:
+      - .:/app
       - trained_models:/app/app/trained_models
     environment:
       - PYTHONUNBUFFERED=1
